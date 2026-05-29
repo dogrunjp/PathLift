@@ -9,7 +9,7 @@ C4モデルは本来4階層（Context → Container → Component → Code）で
 ```mermaid
 flowchart TD
     subgraph PREP["研究者の事前準備（ツール外）"]
-        LIT["論文・文献\n（参考文献の参考文献も含む）"]:::researcher
+        LIT["論文・文献"]:::researcher
         DBOUT["外部データベース\nNCBI / Ensembl等"]:::external
         OT["オルソログ変換テーブル\n【必須前提条件】\nRefSeq protein ID + Entrez Gene ID 保証"]:::required
         LIT -->|対応表を入手| OT
@@ -74,6 +74,7 @@ flowchart TD
     classDef branch fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
     classDef output fill:#f3f4f6,stroke:#6b7280,color:#374151
 ```
+
 
 **Level 3 (Component)** — マッピング解決（Component A）とノード書き換え（Component B）の内部ロジック
 
