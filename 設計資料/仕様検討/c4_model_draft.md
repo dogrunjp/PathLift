@@ -1,19 +1,135 @@
-# パスウェイのliftover自動化ツール検討：　林さんのLift over仕様書（pathway-liftover-spec）を元にClaudeに設計書の叩き台を考えてもらった
+# パスウェイのliftover自動化ツール検討：　林さんのLift over仕様書（pathway-liftover-spec）を元にC4モデルの設計書の叩き台を考える
 
 仕様書を読み込みリフトオーバーワークフローの性質をよく理解した上で、C4モデル風に整理します。
 
 C4モデルは本来4階層（Context → Container → Component → Code）ですが、今回はツール設計の検討段階なので **Context・Container・Component** の3層で構造化し、分岐ポイントや外部リソース依存も明示します。では、C4モデル風の仕様図を3層に分けて描きます。
 
-**Level 1 (Context)** から順に見ていきましょう。まずシステム全体と外部アクターの関係から。
-![alt text](liftover_L1_context.svg)
+**Level 1 (Context)** — システム全体と外部アクターの関係
 
-次に **Level 2 (Container)**：ツールの内部構成と処理パイプラインです。
-![alt text](liftover_L2_container.svg)
+```mermaid
+flowchart TD
+    subgraph PREP["研究者の事前準備（ツール外）"]
+        LIT["論文・文献\n（参考文献の参考文献も含む）"]:::researcher
+        DBOUT["外部データベース\nNCBI / Ensembl等"]:::external
+        OT["オルソログ変換テーブル\n【必須前提条件】\nRefSeq protein ID + Entrez Gene ID 保証"]:::required
+        LIT -->|対応表を入手| OT
+        DBOUT -->|対応表を入手| OT
+    end
+    RE["研究者\n生物種・PathwayID・パラメータを指定"]:::researcher
+    ED["発現データ（任意）\n研究者が用意"]:::optional
+    WP["WikiPathways\nGPML / TSV 取得元"]:::external
+    GDB["遺伝子DB群\nNCBI / Ensembl / RefSeq\ngene2refseq"]:::external
+    PL["Pathway Liftover Tool\nヒト→他種パスウェイ変換"]:::core
+    OUT["変換済みGPMLファイル\nWikiPathways 提出用"]:::output
+    QPX["QPX\nGPML viewer"]:::external
 
-最後に **Level 3 (Component)**：マッピング解決モジュール（最も複雑な内部ロジック）の詳細です。---
-![alt text](liftover_L3_mapping_component.svg)
+    OT -->|事前提供| PL
+    RE -->|入力・設定| PL
+    ED -.->|任意提供| PL
+    WP -.->|自動取得| PL
+    GDB <-.->|ID照合| PL
+    PL --> OUT
+    OUT -.->|利用| QPX
 
-図の補足と、テキスト仕様のまとめです。
+    classDef researcher fill:#d1fae5,stroke:#059669,color:#065f46
+    classDef external  fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    classDef required  fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    classDef optional  fill:#f0f9ff,stroke:#0284c7,color:#0c4a6e
+    classDef core      fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef output    fill:#f3f4f6,stroke:#6b7280,color:#374151
+```
+
+**Level 2 (Container)** — ツール内部の処理パイプライン
+
+```mermaid
+flowchart TD
+    I1["① 入力・フェッチ\nGPML取得・ノードTSV解析\n自動"]:::auto
+    I2["② マッピング解決\ngeneID→PID→対象種PID→geneID\n自動（分岐あり）"]:::auto
+    DEC{"③ ノード書き換え\nマッピング結果で分岐"}:::branch
+    N11["1:1対応\nID・ラベル上書き\n自動"]:::auto
+    N1N["1:N対応\nノード複製\n自動（multimap_policy設定）"]:::config
+    I5["⑤ 未マップ遺伝子処理\n配列類似性検索・候補提示\n★ 要手動レビュー"]:::manual
+    NDEL["ノード削除\nunmatched_policy=delete"]:::delete
+    I4["④ 発現データ照合\nXREF_ID体系照合・列追加\n自動"]:::auto
+    I6["⑥ 検証・レポート\nカバレッジ率・未変換ノード一覧\n自動"]:::auto
+    I7["⑦ GPML出力\nWikiPathways 提出用\n自動"]:::output
+
+    I1 --> I2
+    I2 --> DEC
+    DEC -->|1:1| N11
+    DEC -->|1:N| N1N
+    DEC -->|"対応なし\nunmatched_policy=route"| I5
+    DEC -->|"対応なし\nunmatched_policy=delete"| NDEL
+    N11 --> I4
+    N1N --> I4
+    I5 -.->|手動確認後 採用| I4
+    I5 -.->|不採用| NDEL
+    I4 --> I6
+    I6 --> I7
+
+    classDef auto   fill:#d1fae5,stroke:#059669,color:#065f46
+    classDef manual fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef config fill:#e0f2fe,stroke:#0284c7,color:#075985
+    classDef delete fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    classDef branch fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef output fill:#f3f4f6,stroke:#6b7280,color:#374151
+```
+
+**Level 3 (Component)** — マッピング解決（Component A）とノード書き換え（Component B）の内部ロジック
+
+```mermaid
+flowchart TD
+    subgraph CA["Component A：マッピング解決（モジュール②）"]
+        SRC["ソース遺伝子ノード geneID"]:::input
+        LOOKUP["オルソログ対応表照合\nRefSeq protein ID + Entrez Gene ID"]:::auto
+        DECA{"対応あり?"}:::branch
+        DECN{"1:N対応?"}:::branch
+        ANC["anchorのみ使用\nデフォルト"]:::config
+        ALLC["全候補をレポート出力\nオプション"]:::config
+        CONV["対象種 geneID 確定"]:::auto
+        SIM["配列類似性検索\nDIAMOND等（手法未確定）"]:::auto
+        MANUAL["★ 手動レビュー\n機能保存確認・採否決定"]:::manual
+
+        SRC --> LOOKUP --> DECA
+        DECA -->|Yes| DECN
+        DECA -->|No| SIM
+        DECN -->|1件| CONV
+        DECN -->|"複数件\nanchor優先"| ANC --> CONV
+        DECN -->|"複数件\n全候補出力"| ALLC --> CONV
+        SIM --> MANUAL
+        MANUAL -->|採用| CONV
+        MANUAL -->|不採用| CONV
+    end
+
+    subgraph CB["Component B：ノード書き換え（モジュール③）"]
+        RES["マッピング結果受け取り"]:::input
+        DECB{"対応パターン"}:::branch
+        W11["ID・ラベル上書き\n1:1"]:::auto
+        W1N["ノードを複製\n1:N（multimap_policy）"]:::config
+        ROUTE["⑤ 未マップ遺伝子処理へ\nルーティング"]:::manual
+        DEL["ノード削除\n（unmatched_policy）"]:::delete
+        RET5["⑤ 結果返却"]:::manual
+        DONE["書き換え完了\n→ ④ 発現データ照合へ"]:::auto
+
+        RES --> DECB
+        DECB -->|1:1| W11 --> DONE
+        DECB -->|1:N| W1N --> DONE
+        DECB -->|対応なし| ROUTE --> RET5
+        RET5 -->|採用| W11
+        RET5 -->|不採用| DEL
+    end
+
+    CONV --> RES
+
+    classDef auto     fill:#d1fae5,stroke:#059669,color:#065f46
+    classDef manual   fill:#fef3c7,stroke:#d97706,color:#92400e
+    classDef config   fill:#e0f2fe,stroke:#0284c7,color:#075985
+    classDef delete   fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    classDef branch   fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef input    fill:#f3f4f6,stroke:#6b7280,color:#374151
+```
+
+テキスト仕様のまとめです。
 
 ---
 
