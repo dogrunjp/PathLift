@@ -6,27 +6,35 @@ C4モデルは本来4階層（Context → Container → Component → Code）で
 
 **Level 1 (Context)** — システム全体と外部アクターの関係
 
+> 2026-06-01更新：A-3（研究者の責務範囲）・A-5（GPMLファイル取得方法）を反映。A-1（対応表作成手法）はTBD。
+
 ```mermaid
 flowchart TD
     subgraph PREP["研究者の事前準備（ツール外）"]
         LIT["論文・文献"]:::researcher
         DBOUT["外部データベース\nNCBI / Ensembl等"]:::external
         OT["オルソログ変換テーブル\n【必須前提条件】\nRefSeq protein ID + Entrez Gene ID 保証"]:::required
-        LIT -->|対応表を入手| OT
-        DBOUT -->|対応表を入手| OT
+        OTC["対応表の作成\n【A-1: TBD】\nDIAMOND RBH+ 等が候補"]:::tbd
+        LIT -->|入手または参照| OT
+        DBOUT -->|入手| OT
+        DBOUT -.->|元データ提供（TBD）| OTC
+        OTC -.->|作成（TBD）| OT
     end
-    RE["研究者\n生物種・PathwayID・パラメータを指定"]:::researcher
-    ED["発現データ（任意）\n研究者が用意"]:::optional
-    WP["WikiPathways\nGPML / TSV 取得元"]:::external
+
+    RE["研究者\n必要なファイルの種別を把握し\n具体的なリソースを選択・提供"]:::researcher
+    CFG["設定ファイル\nツールが入力項目・種別を明示\n研究者が具体的な値を記入"]:::config
+    ED["発現データ\n（任意・研究者が用意）"]:::optional
+    WP["WikiPathways DB\nwikipathways-database\n（ローカルclone）"]:::external
     GDB["遺伝子DB群\nNCBI / Ensembl / RefSeq\ngene2refseq"]:::external
-    PL["Pathway Liftover Tool\nヒト→他種パスウェイ変換"]:::core
+    PL["PathLift\nヒト→他種パスウェイ変換\n（半自動）"]:::core
     OUT["変換済みGPMLファイル\nWikiPathways 提出用"]:::output
     QPX["QPX\nGPML viewer"]:::external
 
-    OT -->|事前提供| PL
-    RE -->|入力・設定| PL
-    ED -.->|任意提供| PL
-    WP -.->|自動取得| PL
+    RE -->|設定値を記入| CFG
+    OT -->|パスを設定ファイルに記載| CFG
+    ED -.->|パスを設定ファイルに記載（任意）| CFG
+    CFG -->|読み込み| PL
+    WP -->|cloneから自動取得| PL
     GDB <-.->|ID照合| PL
     PL --> OUT
     OUT -.->|利用| QPX
@@ -37,6 +45,8 @@ flowchart TD
     classDef optional  fill:#f0f9ff,stroke:#0284c7,color:#0c4a6e
     classDef core      fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
     classDef output    fill:#f3f4f6,stroke:#6b7280,color:#374151
+    classDef config    fill:#fff7ed,stroke:#ea580c,color:#7c2d12
+    classDef tbd       fill:#fafafa,stroke:#9ca3af,color:#6b7280,stroke-dasharray: 5 5
 ```
 
 **Level 2 (Container)** — ツール内部の処理パイプライン
@@ -140,21 +150,25 @@ Pathliftはヒトなどの既存のWikiPathwaysのGPMLを入力として、目�
 
 ### Level 1 — Context（システム文脈）
 
+> 2026-06-01更新：A-3・A-5確定。A-1はTBD。
+
+**【GPMLファイルの取得：A-5確定】** WikiPathwaysのGPMLはGitHubリポジトリ（`wikipathways/wikipathways-database`）をローカルにcloneして利用する。パスウェイごとにディレクトリが存在し、`*.gpml`本体とアノテーションtsvが含まれる。cloneを最新状態に維持（pull）することで常に最新リソースを参照できる。
+
+**【研究者とシステムの責務分担：A-3確定】**
+- **研究者の責務：** 具体的にどのファイルを使うかの判断・選択・提供。既存の遺伝子対応表の選択など、研究者の知見に基づく部分であり機械的な自動化が難しい。研究者は設定ファイルに必要な値を記入することでツールに入力を渡す。
+- **システムの責務：** どのタイプのファイルが必要かを研究者に明示すること。設定ファイルの設計（入力項目・種別・説明の充実）を通じて、研究者が迷わず入力できるようにする。不足・不整合があればわかりやすいエラーを返す。
+
 **【必須前提条件】オルソログ変換テーブル（ヒト→対象種の遺伝子ID対応表）が事前に用意されていることが、本ツール動作の必須条件である。** このテーブルが存在しない場合、マッピング解決処理を実行できない。
 
 **【オルソログ変換テーブルの構造】** テーブルはRefSeqタンパク質ID（NP_xxx）とEntrez Gene IDの両方を保証する列構成とする。RefSeq→Entrez Gene IDの変換にはgene2refseqを使用する（NCBI公式の対応テーブルであり最もカバレッジが高い）。テーブルが保証するのはEntrez Gene IDまでであり、発現テーブルとのXREF_ID照合はモジュール④が担う（発現テーブルのID体系は研究対象の生物種によって異なるため、テーブル自体には固定しない）。1:N対応（in-paralogや同一遺伝子の複数アイソフォーム）が存在する場合の扱いはLevel 3の分岐ポイント2を参照。
 
-研究者が**生物種・Pathway ID（またはバッチ指定）・オルソログ変換テーブルパス・発現データパス（任意）**を与えると、ツールがWikiPathwaysからGPMLを取得し、遺伝子DB群（NCBI/Ensembl/RefSeq）および発現データ（任意）と連携して変換済みGPMLを出力する。オルソログ変換テーブルでカバーできない遺伝子については配列類似性検索（手法未確定、DIAMOND等が候補）を用い、その結果確認のみ手動介入が入る。発現データとの照合はオプション操作であり、GPMLノードのXREF_IDと同タイプのID列が発現テーブルに存在するか確認し、なければ列を追加する。
+**【オルソログ変換テーブルの作成：A-1 TBD】** ヒト対非モデル生物では対応表が存在しないのが通常のため、ツールのオプション機能として作成支援を組み込む方向。サポートする手法（DIAMOND RBH+ 等）のリストは打ち合わせ後に確定する。
 
-**【研究者の責務】** PathLiftの外側で研究者が担う作業として以下を含む。
+研究者が設定ファイルに**生物種・PathwayID（またはバッチ指定）・オルソログ変換テーブルパス・発現データパス（任意）**等を記入して実行すると、ツールがWikiPathwaysのローカルcloneからGPMLを取得し、遺伝子DB群（NCBI/Ensembl/RefSeq）および発現データ（任意）と連携して変換済みGPMLを出力する。オルソログ変換テーブルでカバーできない遺伝子については配列類似性検索（手法未確定、DIAMOND等が候補）を用い、その結果確認のみ手動介入が入る。
 
-- **オルソログ変換テーブルの入手：** データベース（NCBI/Ensembl等）または文献（論文）から取得する。論文が出典の場合、参照した論文の参考文献をさらに遡る必要がある場合もある（非モデル生物では対応表が一次文献にしか存在しないケースがある）。
-- **発現データファイルの入手：** 研究対象のプロジェクトから取得する（任意）。
-- **オルソログ変換テーブルの作成（オプション）：** 対応表が存在しない場合、DIAMOND RBH+等のツールを用いて研究者自身が作成するか、ツールのオプション機能を使用する（A-1参照）。
-
-TODO: 手動介入の範囲要検証（ノード書き換えが手動になる可能性あり。バイトスタッフへの確認が必要）
-TODO: 配列類似性検索の手法確定（DIAMOND等、仕様書では抽象化しておくか特定ツールに確定するか）
-TODO: オルソログ変換テーブルが存在しない場合のフロー未定（fanflow等への誘導、またはエラー終了）
+TODO: 手動介入の範囲要検証（ノード書き換えが手動になる可能性あり。バイトスタッフへの確認が必要）【A-2・B-2】
+TODO: 配列類似性検索の手法確定（DIAMOND等、仕様書では抽象化しておくか特定ツールに確定するか）【A-1】
+TODO: オルソログ変換テーブルが存在しない場合のフロー未定（fanflow等への誘導、またはエラー終了）【A-7】
 
 ---
 
