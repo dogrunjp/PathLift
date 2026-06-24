@@ -1,0 +1,41 @@
+schema_version: 2
+
+# WP5277 "Steroid hormone precursor biosynthesis" (Homo sapiens)
+#   -> Bombyx mori (カイコ)  liftover recipe
+# 相対パスは「このrecipeファイルのあるディレクトリ(configs/)」基準。
+# 実環境の resource/ 配置に合わせてパスは調整してください。
+
+pathway:
+  source_gpml: ../resource/WP5277.gpml
+
+target:
+  # 出力GPMLの Xref/@Database に書く値。候補は KWMTBOMO(SilkBase 遺伝子モデル)。
+  # PoC暫定ラベル。より正確には "silkbase" でも可(非標準DataSourceである点は同じ)。
+  output_id_namespace: assembly
+  taxid: 7091                          # Bombyx mori (任意・記録用)
+  # transcript_gene_gtf: 省略 = パターン畳み(KWMTBOMO#####.mrnaN -> KWMTBOMO#####)。
+  #   GCF_030269925.1 の RefSeq GTF は gene_id="LOC#####"/transcript_id="XM_…" 系で
+  #   表の B_mori-pid(KWMTBOMO…) と ID系統が異なり噛まないため、ここでは使わない。
+
+ortholog_resolver:
+  policy: augment                      # compute(blastp/tblastn)未実装のため現状 strict と同挙動
+  provided_table:
+    path: ../resource/B_mori/FF4I-B_mori-protein.tsv   # figshare 19368137
+    format: tsv
+    columns:
+      target_id:     B_mori-pid        # カイコ側ID(先頭列)
+      source_symbol: H_sapiens-gsymbol # 人記号で引く(symbolルートの主キー)
+      source_pid:    H_sapiens-ENSPID  # pidルート用。今はオフ=存在チェックのみ
+  gene_info:
+    # 源はヒトなので Homo_sapiens.gene_info を再利用。
+    # ただし WP5277 の GeneProduct は全て Uniprot-TrEMBL で、記号は TextLabel から取るため
+    # 実際には gene_info は参照されない(Entrez/HGNCノードが混ざる経路向けに残す)。
+    path: ../resource/Homo_sapiens.gene_info
+    taxid: 9606
+  routes:
+    symbol: true
+    pid: false
+    compute: false
+
+# expression: 省略(Phase2。④でTPMにgene_id列を足す段階で追加)
+# curation_file: 省略。MISSはまず一度 run して確定させ、その後 WP5277_Bmori.curation.yaml に seeding。

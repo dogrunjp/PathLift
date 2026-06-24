@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 580" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+  <style>
+    .cont{fill:#e6f4f1;stroke:#0F6E56;stroke-width:1.5}
+    .ext{fill:#eef0ef;stroke:#6b6b66;stroke-width:1.2}
+    .extd{fill:#eef0ef;stroke:#6b6b66;stroke-width:1.2;stroke-dasharray:5 3}
+    .cfg{fill:#fbf0dd;stroke:#9a6700;stroke-width:1.3}
+    .out{fill:#e7f5ea;stroke:#1f7a3d;stroke-width:1.3}
+    .bound{fill:none;stroke:#0F6E56;stroke-width:1.1;stroke-dasharray:7 4}
+    .th{font-size:13px;font-weight:600;fill:#23241f}
+    .ts{font-size:11px;fill:#54564e}
+    .tag{font-size:9.5px;fill:#7a7a72}
+    .edge{fill:none;stroke:#8a8a82;stroke-width:1.3}
+    .edged{fill:none;stroke:#8a8a82;stroke-width:1.2;stroke-dasharray:4 3}
+    .lbl{font-size:10.5px;fill:#5a5a52}
+    .note{font-size:10px;fill:#0F6E56;font-style:italic}
+  </style>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#8a8a82" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <text x="24" y="30" class="th" font-size="15">PathLift — C4 Level 2: Container</text>
+
+  <!-- recipe (config boundary) -->
+  <rect x="315" y="44" width="200" height="58" rx="9" class="cfg"/>
+  <text x="415" y="68" text-anchor="middle" class="th">recipe + curation</text>
+  <text x="415" y="86" text-anchor="middle" class="ts">policy / mechanism 境界</text>
+  <text x="415" y="98" text-anchor="middle" class="tag">[Config]</text>
+
+  <!-- system boundary -->
+  <rect x="283" y="135" width="300" height="205" rx="12" class="bound"/>
+  <text x="295" y="153" class="tag" fill="#0F6E56">PathLift [システム境界]</text>
+
+  <!-- CLI container -->
+  <rect x="313" y="180" width="240" height="118" rx="10" class="cont"/>
+  <text x="433" y="212" text-anchor="middle" class="th">PathLift CLI (Python)</text>
+  <text x="433" y="230" text-anchor="middle" class="tag">[Container]</text>
+  <text x="433" y="252" text-anchor="middle" class="ts">recipe検証 → 解決 → GPML I/O</text>
+  <text x="433" y="282" text-anchor="middle" class="note">内部構成(①②③④/txgene) → L3図</text>
+
+  <!-- left externals (grouped) -->
+  <rect x="40" y="128" width="210" height="58" rx="9" class="ext"/>
+  <text x="145" y="151" text-anchor="middle" class="th">WikiPathways</text>
+  <text x="145" y="169" text-anchor="middle" class="ts">source GPML</text>
+
+  <rect x="40" y="214" width="210" height="66" rx="9" class="ext"/>
+  <text x="145" y="237" text-anchor="middle" class="th">参照データ</text>
+  <text x="145" y="255" text-anchor="middle" class="ts">対応表 / gene_info / GTF</text>
+  <text x="145" y="271" text-anchor="middle" class="tag">[External Store]</text>
+
+  <rect x="40" y="306" width="210" height="54" rx="9" class="extd"/>
+  <text x="145" y="329" text-anchor="middle" class="th">TPM (発現)</text>
+  <text x="145" y="347" text-anchor="middle" class="ts">④用 (Phase2)</text>
+
+  <!-- right outputs -->
+  <rect x="615" y="158" width="180" height="58" rx="9" class="out"/>
+  <text x="705" y="182" text-anchor="middle" class="th">出力 GPML</text>
+  <text x="705" y="200" text-anchor="middle" class="ts">暫定: assembly</text>
+
+  <rect x="615" y="300" width="150" height="54" rx="9" class="out"/>
+  <text x="690" y="323" text-anchor="middle" class="th">拡張 TPM</text>
+  <text x="690" y="341" text-anchor="middle" class="ts">gene_id列付き</text>
+
+  <!-- adjacent systems -->
+  <rect x="600" y="412" width="210" height="68" rx="9" class="extd"/>
+  <text x="705" y="436" text-anchor="middle" class="th">QPX notebook</text>
+  <text x="705" y="454" text-anchor="middle" class="ts">発現で選別 (PathLift外)</text>
+  <text x="705" y="468" text-anchor="middle" class="tag">[External System]</text>
+
+  <rect x="320" y="404" width="180" height="64" rx="9" class="ext"/>
+  <text x="410" y="428" text-anchor="middle" class="th">PathVisio</text>
+  <text x="410" y="446" text-anchor="middle" class="ts">開いて手動編集</text>
+  <text x="410" y="460" text-anchor="middle" class="tag">[External System]</text>
+
+  <!-- edges -->
+  <line x1="415" y1="102" x2="428" y2="180" class="edge" marker-end="url(#arr)"/>
+  <text x="438" y="150" class="lbl">config</text>
+
+  <line x1="250" y1="157" x2="311" y2="205" class="edge" marker-end="url(#arr)"/>
+  <text x="256" y="180" class="lbl">read</text>
+
+  <line x1="250" y1="247" x2="311" y2="235" class="edge" marker-end="url(#arr)"/>
+  <text x="256" y="228" class="lbl">表 / gene_info / GTF</text>
+
+  <line x1="250" y1="333" x2="311" y2="270" class="edged" marker-end="url(#arr)"/>
+  <text x="256" y="318" class="lbl">(④)</text>
+
+  <line x1="553" y1="206" x2="613" y2="190" class="edge" marker-end="url(#arr)"/>
+  <text x="566" y="196" class="lbl">write</text>
+
+  <line x1="553" y1="258" x2="613" y2="322" class="edged" marker-end="url(#arr)"/>
+  <text x="560" y="300" class="lbl">(④) gene_id列</text>
+
+  <line x1="785" y1="216" x2="785" y2="410" class="edge" marker-end="url(#arr)"/>
+  <text x="792" y="320" class="lbl">出力GPML</text>
+
+  <line x1="690" y1="354" x2="700" y2="410" class="edge" marker-end="url(#arr)"/>
+
+  <line x1="615" y1="200" x2="500" y2="408" class="edge" marker-end="url(#arr)"/>
+  <text x="520" y="330" class="lbl">開いて手動編集</text>
+</svg>

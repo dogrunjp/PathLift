@@ -1,0 +1,16 @@
+# 大容量入力（DOI/figshare等から取得。リポジトリには含めない）
+resource/*
+  !resource/.gitkeep
+
+# 生成物（liftover 出力 GPML）
+out_*.gpml
+*.lifted.gpml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# OS / エディタ
+.DS_Store

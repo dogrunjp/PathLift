@@ -1,0 +1,38 @@
+# liftover recipe: WP5609 (Homo sapiens) -> Apis cerana japonica
+# 仕様: recipe.schema.md (schema_version 2)
+# 相対パスは「この recipe ファイルのあるディレクトリ」基準で解決される。
+schema_version: 2
+
+pathway:
+  source_gpml: ../resource/WP5609.gpml
+  # 源IDの名前空間はノード単位で Xref/@Database から読む
+  # (WP5609実測: Entrez Gene 25 / HGNC 12 / Enzyme Nomenclature 1)
+
+target:
+  taxid: 7461                          # TODO: A. cerana japonica 亜種の taxid を確認(7461 は Apis cerana)
+  output_id_namespace: assembly        # PoC暫定。Entrez化は後段 enrichment で保留
+  transcript_gene_gtf: ../resource/A_cerana/figshare_27175734/ref_transcript_Ac.gtf
+
+ortholog_resolver:
+  policy: augment                      # strict | augment
+  provided_table:
+    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv
+    format: tsv
+    columns:
+      target_id:     ProteinID
+      source_symbol: H_sapiens-gene_symbol   # 主ルートの結合キー(spike実測 31/38)
+      source_pid:    H_sapiens-pid           # 精密ルート用(ENSP)。pidルート有効化時に使用
+  gene_info:
+    path: ../resource/Homo_sapiens.gene_info # Entrez->公式記号(GeneID一意キーで正規化)
+    taxid: 9606
+  routes:
+    symbol: true        # 主・再現率重視
+    pid: false          # 精密。有効化するなら idmap(source_id->ENSP) を併記
+    compute: false      # blastp。PoCは保留(curation で代替)
+  # idmap: ../resource/entrez2ensp.tsv   # routes.pid: true のとき必須
+
+expression:                            # Phase2(④ expression.py は未実装)
+  tpm: ../resource/A_cerana/figshare_27157632/tpm_Ac.tsv
+  # GTF は target.transcript_gene_gtf を共有
+
+curation_file: WP5609_Ac.curation.yaml
