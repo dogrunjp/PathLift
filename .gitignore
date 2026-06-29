@@ -1,6 +1,7 @@
 # 大容量入力（DOI/figshare等から取得。リポジトリには含めない）
 resource/*
-  !resource/.gitkeep
+!resource/.gitkeep
+!resource/oryzacyc.tar.gz
 
 # 生成物（liftover 出力 GPML）
 out_*.gpml
