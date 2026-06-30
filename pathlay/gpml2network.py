@@ -203,6 +203,71 @@ def parse_gpml(path: str) -> Parsed:
 # --------------------------------------------------------------------------- #
 # 出力
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# transcript -> protein -> anchor の畳み込み（PlantCyc系の冗長Protein層を除去）
+# --------------------------------------------------------------------------- #
+@dataclass
+class CollapsePlan:
+    remove_nodes: set = field(default_factory=set)         # 削除するProteinのGraphId
+    remove_interactions: set = field(default_factory=set)  # 削除する転写翻訳Interaction
+    rewire: dict = field(default_factory=dict)             # 触媒Interaction id -> 新start(gene)
+    protein_to_gene: dict = field(default_factory=dict)    # protein -> gene
+
+
+def collapse_transcript_protein(parsed: "Parsed") -> CollapsePlan:
+    """
+    「transcript(GeneProduct) →[mim-transcription-translation]→ Protein
+      →[mim-catalysis]→ anchor」という構造を検出する。
+    対象は次を全て満たす Protein 中間ノード:
+      - Type == "Protein"
+      - group のメンバーでない
+      - 入ってくる転写翻訳エッジがちょうど1本（gene が一意に決まる）
+      - anchor へ向かう触媒エッジが1本以上
+    返す CollapsePlan に従って適用すると、Protein を削除し、その触媒を
+    transcript(gene) から直接 anchor へ張り替える。
+    """
+    anchor_ids = parsed.anchor_ids
+    group_members = {m for g in parsed.groups.values() for m in g.get("members", [])}
+    plan = CollapsePlan()
+
+    for gid, node in parsed.nodes.items():
+        if node.node_type != "Protein" or gid in group_members:
+            continue
+        in_trans = [i for i in parsed.interactions
+                    if i.arrowhead == "mim-transcription-translation" and i.end_ref == gid]
+        out_cat = [i for i in parsed.interactions
+                   if i.start_ref == gid and i.end_ref in anchor_ids]
+        if len(in_trans) == 1 and out_cat:
+            gene = in_trans[0].start_ref
+            if not gene:
+                continue
+            plan.remove_nodes.add(gid)
+            plan.remove_interactions.add(in_trans[0].graph_id)
+            for c in out_cat:
+                plan.rewire[c.graph_id] = gene
+            plan.protein_to_gene[gid] = gene
+    return plan
+
+
+def apply_collapse(parsed: "Parsed", plan: CollapsePlan) -> None:
+    """CollapsePlan を Parsed に適用（破壊的）。"""
+    for pid in plan.remove_nodes:
+        parsed.nodes.pop(pid, None)
+
+    new_inter = []
+    for i in parsed.interactions:
+        if i.graph_id in plan.remove_interactions:
+            continue
+        if i.graph_id in plan.rewire:          # 触媒の起点を gene に張り替え
+            i.start_ref = plan.rewire[i.graph_id]
+        new_inter.append(i)
+    parsed.interactions = new_inter
+
+    # ネットワークの edges からは、削除した転写翻訳エッジを除く
+    parsed.edges = [e for e in parsed.edges
+                    if e.interaction_id not in plan.remove_interactions]
+
+
 def label_of(p: Parsed, graph_id: str) -> str:
     node = p.nodes.get(graph_id)
     if node and node.label:

@@ -362,12 +362,28 @@ def assign_connection_points(parsed, positions):
 # GPML への書き戻し
 # --------------------------------------------------------------------------- #
 def write_gpml_with_layout(input_path, parsed, positions, output_path,
-                           fit_board=True, optimize_sides=True, ndigits=2):
+                           fit_board=True, optimize_sides=True, collapse_plan=None,
+                           ndigits=2):
     tree = ET.parse(input_path)
     root = tree.getroot()
     ns = root.tag[1:root.tag.index("}")] if root.tag.startswith("{") else ""
     if ns:
         ET.register_namespace("", ns)
+
+    # --- transcript->protein->anchor の畳み込み（Protein/転写翻訳を削除、触媒を張り替え）---
+    if collapse_plan is not None:
+        for child in list(root):
+            ln = g2n.localname(child.tag)
+            gid = child.get("GraphId")
+            if ln == "DataNode" and gid in collapse_plan.remove_nodes:
+                root.remove(child)
+            elif ln == "Interaction" and gid in collapse_plan.remove_interactions:
+                root.remove(child)
+            elif ln == "Interaction" and gid in collapse_plan.rewire:
+                for gr in g2n.iter_children(child, "Graphics"):
+                    pts = list(g2n.iter_children(gr, "Point"))
+                    if pts:
+                        pts[0].set("GraphRef", collapse_plan.rewire[gid])
 
     # --- DataNode の中心を更新 ---
     updated = 0
@@ -427,10 +443,18 @@ def main(argv=None):
     ap.add_argument("--no-fit-board", action="store_true")
     ap.add_argument("--no-optimize-sides", action="store_true",
                     help="接続辺(RelX/RelY)の最短化を行わない")
+    ap.add_argument("--no-collapse-proteins", action="store_true",
+                    help="transcript->protein->anchor の冗長Protein層を畳み込まない")
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args(argv)
 
     parsed = g2n.parse_gpml(args.input)
+
+    plan = None
+    if not args.no_collapse_proteins:
+        plan = g2n.collapse_transcript_protein(parsed)
+        g2n.apply_collapse(parsed, plan)
+
     positions = bfs_layout(parsed, root=args.root)
 
     if args.nodes_out:
@@ -442,11 +466,15 @@ def main(argv=None):
     if args.write_gpml:
         n = write_gpml_with_layout(args.input, parsed, positions, args.write_gpml,
                                    fit_board=not args.no_fit_board,
-                                   optimize_sides=not args.no_optimize_sides)
+                                   optimize_sides=not args.no_optimize_sides,
+                                   collapse_plan=plan)
         if not args.quiet:
             print(f"\n# GPML書き戻し: {args.write_gpml}（DataNode {n}件を更新）", file=sys.stderr)
 
     if not args.quiet:
+        if plan and plan.remove_nodes:
+            print(f"# Protein畳み込み: {len(plan.remove_nodes)}個のProteinを削除し触媒を張り替え",
+                  file=sys.stderr)
         placed = sum(1 for n in parsed.nodes.values() if n.x is not None)
         print(f"# 配置ノード: {placed}/{len(parsed.nodes)}", file=sys.stderr)
 

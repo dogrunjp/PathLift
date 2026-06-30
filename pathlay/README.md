@@ -128,7 +128,20 @@ parsed.interaction_by_id   # {GraphId: Interaction}
 | `--root GRAPHID` | BFS ルートを明示（省略時は入次数0のノードを自動選択） |
 | `--no-fit-board` | `BoardWidth/BoardHeight` の自動再計算をしない |
 | `--no-optimize-sides` | 接続辺 `RelX/RelY` の最短化をしない |
+| `--no-collapse-proteins` | transcript→protein→anchor の冗長Protein層を畳み込まない（既定は畳み込む） |
 | `--quiet` | サマリ（stderr）を抑制 |
+
+### transcript→protein→anchor の畳み込み（既定ON / opt-out）
+
+PlantCyc(Cyc_to_wiki)系の GPML は `GeneProduct(transcript) →[転写翻訳]→ Protein →[触媒]→ anchor` の3段になりがちで、Protein 層が冗長。既定ではこれを検出して **Protein を削除し、transcript を直接 anchor へ触媒接続に張り替えて**書き出す。
+
+対象となる Protein 中間ノードの条件:
+
+- `Type == "Protein"`、かつ group のメンバーでない
+- 入ってくる転写翻訳(`mim-transcription-translation`)エッジがちょうど1本（transcript が一意）
+- anchor へ向かう触媒(`mim-catalysis`)エッジが1本以上
+
+→ 該当する Protein とその転写翻訳エッジを削除し、触媒エッジの起点を transcript に張り替える（複数の触媒先 anchor があれば全て張り替え）。`--no-collapse-proteins` で無効化。ライブラリでは `g2n.collapse_transcript_protein(parsed)` で計画を得て `g2n.apply_collapse(parsed, plan)` で適用し、`write_gpml_with_layout(..., collapse_plan=plan)` に渡す。
 
 ### ライブラリとして使う
 
