@@ -14,5 +14,8 @@ __pycache__/
 .venv/
 *.egg-info/
 
+# 別リポジトリで管理
+pathlay/
+
 # OS / エディタ
 .DS_Store
