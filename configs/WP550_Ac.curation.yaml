@@ -1,0 +1,18 @@
+overrides:        # 候補を強制的に追加/固定する
+  - source: TPH1          # 源(正規化後symbol または Xref ID)
+    target: MSTRG.294      # assembly gene
+    note: "blastpで手動対応"
+  - source: TPH1          # 源(正規化後symbol または Xref ID)
+    target: MSTRG.5893      # assembly gene
+    note: "blastpで手動対応"
+unmapped:         # 解決不能として確定保持(解決を試みない)
+  - source: PNMT
+    note: "ミツバチに明確なオーソログ無し"
+  - source: COMT
+    note: "ミツバチに明確なオーソログ無し"
+  - source: AANAT
+    note: "ミツバチに明確なオーソログ無し"
+  - source: MAOA
+    note: "ミツバチに明確なオーソログ無し"
+  - source: ASMT
+    note: "ミツバチに明確なオーソログ無し"

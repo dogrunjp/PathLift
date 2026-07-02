@@ -1,0 +1,34 @@
+overrides:        # 候補を強制的に追加/固定する
+  - source: PRKACG          # 源(正規化後symbol または Xref ID)
+    target: MSTRG.2646      # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG         # 源(正規化後symbol または Xref ID)
+    target: MSTRG.10426      # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG         # 源(正規化後symbol または Xref ID)
+    target: MSTRG.763     # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG         # 源(正規化後symbol または Xref ID)
+    target: MSTRG.9022      # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG          # 源(正規化後symbol または Xref ID)
+    target: MSTRG.11644      # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG        # 源(正規化後symbol または Xref ID)
+    target: MSTRG.6799      # assembly gene
+    note: "blastpで手動対応"
+  - source: PRKACG         # 源(正規化後symbol または Xref ID)
+    target: MSTRG.6092      # assembly gene
+    note: "blastpで手動対応"
+  - source: MAOB        # 源(正規化後symbol または Xref ID)
+    target: MSTRG.4846      # assembly gene
+    note: "blastpで手動対応"
+unmapped:         # 解決不能として確定保持(解決を試みない)
+  - source: TYR
+    note: "ミツバチに明確なオーソログ無し"
+  - source: NQO1
+    note: "ミツバチに明確なオーソログ無し"
+  - source: MAOA
+    note: "ミツバチに明確なオーソログ無し"
+  - source: COMT
+    note: "ミツバチに明確なオーソログ無し"
