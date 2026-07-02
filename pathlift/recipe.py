@@ -31,6 +31,7 @@ class Recipe:
     policy: str
     target_taxid: int | None = None
     transcript_gene_gtf: str | None = None
+    reference_fasta: str | None = None
     gene_info_path: str | None = None
     gene_info_taxid: str = "9606"
     idmap_path: str | None = None
@@ -78,6 +79,7 @@ def load_recipe(path: str) -> Recipe:
         errs.append("target.output_id_namespace が空")
     gtf = rp(target.get("transcript_gene_gtf"))
     need_file(gtf, "target.transcript_gene_gtf")
+    ref_fa = rp(target.get("reference_fasta"))
     taxid = target.get("taxid")
 
     # ortholog_resolver
@@ -163,6 +165,7 @@ def load_recipe(path: str) -> Recipe:
         base_dir=base_dir, source_gpml=source_gpml, output_id_namespace=str(output_ns),
         table_path=table_path, table_format=table_format, columns=columns,
         routes=routes, policy=policy, target_taxid=taxid, transcript_gene_gtf=gtf,
+        reference_fasta=ref_fa,
         gene_info_path=gene_info_path, gene_info_taxid=gene_info_taxid,
         idmap_path=idmap_path, compute_fallback=compute_fallback, tpm_path=tpm_path,
         curation=curation,

@@ -1,12 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
   <style>
     .teal{fill:#e6f4f1;stroke:#0F6E56;stroke-width:1.2}
     .amber{fill:#fbf0dd;stroke:#9a6700;stroke-width:1.2}
     .gray{fill:#eef0ef;stroke:#6b6b66;stroke-width:1.2}
     .green{fill:#e7f5ea;stroke:#1f7a3d;stroke-width:1.2}
+    .blue{fill:#edf2ff;stroke:#375a9e;stroke-width:1.2}
     .dash{stroke-dasharray:5 3}
     .th{font-size:13px;font-weight:600;fill:#23241f}
     .ts{font-size:11px;fill:#54564e}
+    .tag{font-size:9.5px;fill:#7a7a72}
     .edge{fill:none;stroke:#8a8a82;stroke-width:1.2}
     .edash{fill:none;stroke:#8a8a82;stroke-width:1.1;stroke-dasharray:4 3}
   </style>
@@ -16,70 +18,129 @@
     </marker>
   </defs>
 
-  <rect x="288" y="80" width="204" height="380" rx="12" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="6 4"/>
-  <text class="ts" x="296" y="96" text-anchor="start">PathLift (container)</text>
+  <text x="24" y="30" class="th" font-size="15">PathLift - C4 Level 3: Components after implementation</text>
 
-  <rect class="amber" x="300" y="20" width="180" height="44" rx="8"/>
-  <text class="th" x="390" y="36" text-anchor="middle" dominant-baseline="central">liftover recipe</text>
-  <text class="ts" x="390" y="52" text-anchor="middle" dominant-baseline="central">設定 + curation</text>
-  <line class="edge" x1="390" y1="64" x2="390" y2="88" marker-end="url(#arrow)"/>
+  <rect x="292" y="76" width="500" height="520" rx="12" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="6 4"/>
+  <text class="ts" x="304" y="94" text-anchor="start">PathLift CLI container</text>
 
-  <rect class="teal" x="300" y="90" width="180" height="42" rx="8"/>
-  <text class="th" x="390" y="105" text-anchor="middle" dominant-baseline="central">①レシピローダ</text>
-  <text class="ts" x="390" y="121" text-anchor="middle" dominant-baseline="central">検証→config</text>
-  <line class="edge" x1="390" y1="132" x2="390" y2="154" marker-end="url(#arrow)"/>
+  <rect class="amber" x="370" y="22" width="220" height="46" rx="8"/>
+  <text class="th" x="480" y="38" text-anchor="middle" dominant-baseline="central">liftover recipe</text>
+  <text class="ts" x="480" y="55" text-anchor="middle" dominant-baseline="central">設定 + curation + rescue設定</text>
+  <line class="edge" x1="480" y1="68" x2="480" y2="104" marker-end="url(#arrow)"/>
 
-  <rect class="teal" x="300" y="156" width="180" height="56" rx="8"/>
-  <text class="th" x="390" y="176" text-anchor="middle" dominant-baseline="central">②パスウェイ変換器</text>
-  <text class="ts" x="390" y="194" text-anchor="middle" dominant-baseline="central">GPML I/O・主導・展開</text>
+  <rect class="teal" x="390" y="104" width="180" height="50" rx="8"/>
+  <text class="th" x="480" y="122" text-anchor="middle" dominant-baseline="central">①レシピローダ</text>
+  <text class="ts" x="480" y="140" text-anchor="middle" dominant-baseline="central">検証・相対パス解決</text>
+  <line class="edge" x1="480" y1="154" x2="480" y2="184" marker-end="url(#arrow)"/>
 
-  <rect class="gray" x="40" y="162" width="150" height="44" rx="8"/>
-  <text class="th" x="115" y="178" text-anchor="middle" dominant-baseline="central">元GPML</text>
-  <text class="ts" x="115" y="195" text-anchor="middle" dominant-baseline="central">ヒト・混在ns</text>
-  <line class="edge" x1="190" y1="184" x2="298" y2="184" marker-end="url(#arrow)"/>
-  <rect class="green" x="560" y="162" width="180" height="44" rx="8"/>
-  <text class="th" x="650" y="178" text-anchor="middle" dominant-baseline="central">出力GPML</text>
-  <text class="ts" x="650" y="195" text-anchor="middle" dominant-baseline="central">暫定:assembly</text>
-  <line class="edge" x1="480" y1="184" x2="558" y2="184" marker-end="url(#arrow)"/>
+  <rect class="teal" x="390" y="184" width="180" height="62" rx="8"/>
+  <text class="th" x="480" y="205" text-anchor="middle" dominant-baseline="central">CLI orchestrator</text>
+  <text class="ts" x="480" y="224" text-anchor="middle" dominant-baseline="central">解決器/変換器を構築</text>
+  <text class="tag" x="480" y="239" text-anchor="middle" dominant-baseline="central">cli.py</text>
 
-  <line class="edge" x1="390" y1="212" x2="390" y2="242" marker-end="url(#arrow)"/>
-  <text class="ts" x="406" y="230" text-anchor="start">resolve</text>
+  <rect class="teal" x="390" y="284" width="180" height="62" rx="8"/>
+  <text class="th" x="480" y="305" text-anchor="middle" dominant-baseline="central">②パスウェイ変換器</text>
+  <text class="ts" x="480" y="324" text-anchor="middle" dominant-baseline="central">GPML I/O・展開・stats</text>
+  <text class="tag" x="480" y="339" text-anchor="middle" dominant-baseline="central">transform.py + gpml.py</text>
 
-  <rect class="teal" x="300" y="242" width="180" height="56" rx="8"/>
-  <text class="th" x="390" y="262" text-anchor="middle" dominant-baseline="central">③オーソログ解決器</text>
-  <text class="ts" x="390" y="280" text-anchor="middle" dominant-baseline="central">複合ルート→候補集合</text>
-  <rect class="gray" x="40" y="238" width="150" height="40" rx="8"/>
-  <text class="th" x="115" y="258" text-anchor="middle" dominant-baseline="central">オーソログ表</text>
-  <line class="edge" x1="190" y1="258" x2="298" y2="262" marker-end="url(#arrow)"/>
-  <rect class="gray" x="40" y="286" width="150" height="38" rx="8"/>
-  <text class="th" x="115" y="305" text-anchor="middle" dominant-baseline="central">gene_info</text>
-  <line class="edge" x1="190" y1="303" x2="298" y2="290" marker-end="url(#arrow)"/>
+  <rect class="teal" x="390" y="396" width="180" height="66" rx="8"/>
+  <text class="th" x="480" y="418" text-anchor="middle" dominant-baseline="central">③オーソログ解決器</text>
+  <text class="ts" x="480" y="437" text-anchor="middle" dominant-baseline="central">symbol/pid/override和集合</text>
+  <text class="tag" x="480" y="453" text-anchor="middle" dominant-baseline="central">ortholog.py</text>
 
-  <line class="edge" x1="390" y1="298" x2="390" y2="326" marker-end="url(#arrow)"/>
-  <text class="ts" x="406" y="314" text-anchor="start">uses</text>
-  <rect class="teal" x="300" y="328" width="180" height="44" rx="8"/>
-  <text class="th" x="390" y="344" text-anchor="middle" dominant-baseline="central">txgene (共有)</text>
-  <text class="ts" x="390" y="361" text-anchor="middle" dominant-baseline="central">TranscriptGeneMap</text>
-  <rect class="gray" x="40" y="330" width="150" height="40" rx="8"/>
-  <text class="th" x="115" y="350" text-anchor="middle" dominant-baseline="central">GTF</text>
-  <line class="edge" x1="190" y1="350" x2="298" y2="350" marker-end="url(#arrow)"/>
+  <rect class="teal" x="612" y="396" width="150" height="54" rx="8"/>
+  <text class="th" x="687" y="415" text-anchor="middle" dominant-baseline="central">txgene (共有)</text>
+  <text class="ts" x="687" y="434" text-anchor="middle" dominant-baseline="central">GTF or ID pattern</text>
 
-  <line class="edge" x1="390" y1="402" x2="390" y2="374" marker-end="url(#arrow)"/>
-  <text class="ts" x="406" y="390" text-anchor="start">uses</text>
-  <rect class="teal dash" x="300" y="402" width="180" height="48" rx="8"/>
-  <text class="th" x="390" y="419" text-anchor="middle" dominant-baseline="central">④発現リンカ (未)</text>
-  <text class="ts" x="390" y="437" text-anchor="middle" dominant-baseline="central">TPMにgene_id列</text>
-  <rect class="gray" x="40" y="404" width="150" height="44" rx="8"/>
-  <text class="th" x="115" y="426" text-anchor="middle" dominant-baseline="central">TPM</text>
-  <line class="edge" x1="190" y1="426" x2="298" y2="426" marker-end="url(#arrow)"/>
-  <rect class="green" x="540" y="402" width="160" height="46" rx="8"/>
-  <text class="th" x="620" y="419" text-anchor="middle" dominant-baseline="central">拡張TPM</text>
-  <text class="ts" x="620" y="437" text-anchor="middle" dominant-baseline="central">gene_id列付き</text>
-  <line class="edge" x1="480" y1="426" x2="538" y2="426" marker-end="url(#arrow)"/>
+  <rect class="teal dash" x="612" y="510" width="150" height="54" rx="8"/>
+  <text class="th" x="687" y="529" text-anchor="middle" dominant-baseline="central">④発現リンカ (未)</text>
+  <text class="ts" x="687" y="548" text-anchor="middle" dominant-baseline="central">TPMにgene_id列</text>
 
-  <rect class="gray dash" x="540" y="498" width="200" height="56" rx="8"/>
-  <text class="th" x="640" y="518" text-anchor="middle" dominant-baseline="central">QPX notebook (PathLift外)</text>
-  <text class="ts" x="640" y="537" text-anchor="middle" dominant-baseline="central">選別・可視化(選別の主役)</text>
-  <path class="edash" d="M715 206 L715 496" marker-end="url(#arrow)"/>
-  <path class="edash" d="M620 448 L620 496" marker-end="url(#arrow)"/>
+  <!-- left stores -->
+  <rect class="gray" x="40" y="284" width="160" height="46" rx="8"/>
+  <text class="th" x="120" y="302" text-anchor="middle" dominant-baseline="central">元GPML</text>
+  <text class="ts" x="120" y="319" text-anchor="middle" dominant-baseline="central">GeneProduct</text>
+  <line class="edge" x1="200" y1="307" x2="388" y2="307" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="40" y="388" width="160" height="50" rx="8"/>
+  <text class="th" x="120" y="406" text-anchor="middle" dominant-baseline="central">オーソログ表</text>
+  <text class="ts" x="120" y="423" text-anchor="middle" dominant-baseline="central">symbol / pid列</text>
+  <line class="edge" x1="200" y1="413" x2="388" y2="422" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="40" y="452" width="160" height="44" rx="8"/>
+  <text class="th" x="120" y="474" text-anchor="middle" dominant-baseline="central">gene_info / idmap</text>
+  <line class="edge" x1="200" y1="474" x2="388" y2="446" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="826" y="390" width="160" height="44" rx="8"/>
+  <text class="th" x="906" y="412" text-anchor="middle" dominant-baseline="central">GTF</text>
+  <line class="edge" x1="826" y1="412" x2="764" y2="422" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="826" y="512" width="160" height="44" rx="8"/>
+  <text class="th" x="906" y="534" text-anchor="middle" dominant-baseline="central">TPM</text>
+  <line class="edge" x1="826" y1="534" x2="764" y2="537" marker-end="url(#arrow)"/>
+
+  <!-- core flow -->
+  <line class="edge" x1="480" y1="246" x2="480" y2="282" marker-end="url(#arrow)"/>
+  <text class="ts" x="494" y="268" text-anchor="start">run</text>
+  <line class="edge" x1="480" y1="346" x2="480" y2="394" marker-end="url(#arrow)"/>
+  <text class="ts" x="494" y="374" text-anchor="start">resolve each node</text>
+  <path class="edge" d="M390 430 C330 392 330 338 388 322" marker-end="url(#arrow)"/>
+  <text class="ts" x="304" y="370" text-anchor="start">候補集合</text>
+  <line class="edge" x1="570" y1="428" x2="610" y2="424" marker-end="url(#arrow)"/>
+  <text class="ts" x="578" y="413" text-anchor="start">fold</text>
+
+  <!-- outputs -->
+  <rect class="green" x="826" y="288" width="190" height="54" rx="8"/>
+  <text class="th" x="921" y="307" text-anchor="middle" dominant-baseline="central">出力GPML</text>
+  <text class="ts" x="921" y="326" text-anchor="middle" dominant-baseline="central">候補展開 / unmapped Comment</text>
+  <line class="edge" x1="570" y1="315" x2="824" y2="315" marker-end="url(#arrow)"/>
+
+  <rect class="green" x="826" y="588" width="160" height="46" rx="8"/>
+  <text class="th" x="906" y="605" text-anchor="middle" dominant-baseline="central">拡張TPM</text>
+  <text class="ts" x="906" y="623" text-anchor="middle" dominant-baseline="central">Phase2</text>
+  <path class="edash" d="M762 538 L824 608" marker-end="url(#arrow)"/>
+
+  <!-- auto rescue -->
+  <rect class="blue" x="310" y="604" width="160" height="54" rx="8"/>
+  <text class="th" x="390" y="623" text-anchor="middle" dominant-baseline="central">FASTA取得</text>
+  <text class="ts" x="390" y="642" text-anchor="middle" dominant-baseline="central">query_fasta.py</text>
+
+  <rect class="blue" x="510" y="604" width="170" height="54" rx="8"/>
+  <text class="th" x="595" y="623" text-anchor="middle" dominant-baseline="central">BLAST実行 + filter</text>
+  <text class="ts" x="595" y="642" text-anchor="middle" dominant-baseline="central">blast_runner.py</text>
+
+  <rect class="blue" x="720" y="604" width="170" height="54" rx="8"/>
+  <text class="th" x="805" y="623" text-anchor="middle" dominant-baseline="central">auto curation生成</text>
+  <text class="ts" x="805" y="642" text-anchor="middle" dominant-baseline="central">auto_curation.py</text>
+
+  <rect class="green" x="720" y="672" width="170" height="38" rx="8"/>
+  <text class="th" x="805" y="691" text-anchor="middle" dominant-baseline="central">*_auto_curation.yaml</text>
+
+  <path class="edge" d="M480 346 C480 522 392 522 390 602" marker-end="url(#arrow)"/>
+  <text class="ts" x="330" y="558" text-anchor="start">unmapped_list</text>
+  <line class="edge" x1="470" y1="631" x2="508" y2="631" marker-end="url(#arrow)"/>
+  <line class="edge" x1="680" y1="631" x2="718" y2="631" marker-end="url(#arrow)"/>
+  <line class="edge" x1="805" y1="658" x2="805" y2="670" marker-end="url(#arrow)"/>
+  <path class="edge" d="M720 690 C600 704 590 160 572 207" marker-end="url(#arrow)"/>
+  <text class="ts" x="608" y="700" text-anchor="start">reload curation / 2周目</text>
+
+  <rect class="gray" x="40" y="604" width="160" height="54" rx="8"/>
+  <text class="th" x="120" y="623" text-anchor="middle" dominant-baseline="central">UniProt REST</text>
+  <text class="ts" x="120" y="642" text-anchor="middle" dominant-baseline="central">symbol -> FASTA</text>
+  <line class="edge" x1="200" y1="631" x2="308" y2="631" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="510" y="672" width="170" height="38" rx="8"/>
+  <text class="th" x="595" y="691" text-anchor="middle" dominant-baseline="central">reference FASTA / nr</text>
+  <line class="edge" x1="595" y1="672" x2="595" y2="660" marker-end="url(#arrow)"/>
+
+  <rect class="gray" x="926" y="604" width="130" height="54" rx="8"/>
+  <text class="th" x="991" y="623" text-anchor="middle" dominant-baseline="central">NCBI E-utilities</text>
+  <text class="ts" x="991" y="642" text-anchor="middle" dominant-baseline="central">protein -> gene</text>
+  <line class="edash" x1="926" y1="631" x2="892" y2="631" marker-end="url(#arrow)"/>
+
+  <!-- external downstream -->
+  <rect class="gray dash" x="826" y="80" width="210" height="58" rx="8"/>
+  <text class="th" x="931" y="101" text-anchor="middle" dominant-baseline="central">QPX notebook (PathLift外)</text>
+  <text class="ts" x="931" y="120" text-anchor="middle" dominant-baseline="central">選別・可視化</text>
+  <path class="edash" d="M921 288 L931 140" marker-end="url(#arrow)"/>
 </svg>

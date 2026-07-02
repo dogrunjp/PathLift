@@ -1,0 +1,31 @@
+schema_version: 2
+
+pathway:
+  source_gpml: ../resource/WP550.gpml
+
+target:
+  taxid: 7461                          
+  output_id_namespace: assembly        
+  transcript_gene_gtf: ../resource/A_cerana/figshare_27175734/ref_transcript_Ac.gtf
+
+ortholog_resolver:
+  policy: augment                      
+  provided_table:
+    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv
+    format: tsv
+    columns:
+      target_id:     ProteinID
+      source_symbol: H_sapiens-gene_symbol   
+      source_pid:    H_sapiens-pid           
+  gene_info:
+    path: ../resource/Homo_sapiens.gene_info 
+    taxid: 9606
+  routes:
+    symbol: true        
+    pid: false          
+    compute: false      
+
+expression:                            
+  tpm: ../resource/A_cerana/figshare_27175734/tpm_Ac.tsv
+
+curation_file: WP550_Ac.curation.yaml

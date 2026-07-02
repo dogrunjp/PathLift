@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 580" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
   <style>
     .cont{fill:#e6f4f1;stroke:#0F6E56;stroke-width:1.5}
     .ext{fill:#eef0ef;stroke:#6b6b66;stroke-width:1.2}
     .extd{fill:#eef0ef;stroke:#6b6b66;stroke-width:1.2;stroke-dasharray:5 3}
+    .svc{fill:#edf2ff;stroke:#375a9e;stroke-width:1.2}
     .cfg{fill:#fbf0dd;stroke:#9a6700;stroke-width:1.3}
     .out{fill:#e7f5ea;stroke:#1f7a3d;stroke-width:1.3}
     .bound{fill:none;stroke:#0F6E56;stroke-width:1.1;stroke-dasharray:7 4}
@@ -20,83 +21,128 @@
     </marker>
   </defs>
 
-  <text x="24" y="30" class="th" font-size="15">PathLift — C4 Level 2: Container</text>
+  <text x="24" y="30" class="th" font-size="15">PathLift - C4 Level 2: Container</text>
 
   <!-- recipe (config boundary) -->
-  <rect x="315" y="44" width="200" height="58" rx="9" class="cfg"/>
-  <text x="415" y="68" text-anchor="middle" class="th">recipe + curation</text>
-  <text x="415" y="86" text-anchor="middle" class="ts">policy / mechanism 境界</text>
-  <text x="415" y="98" text-anchor="middle" class="tag">[Config]</text>
+  <rect x="385" y="44" width="220" height="64" rx="9" class="cfg"/>
+  <text x="495" y="68" text-anchor="middle" class="th">recipe + curation</text>
+  <text x="495" y="86" text-anchor="middle" class="ts">policy / mechanism 境界</text>
+  <text x="495" y="100" text-anchor="middle" class="tag">[Config]</text>
 
   <!-- system boundary -->
-  <rect x="283" y="135" width="300" height="205" rx="12" class="bound"/>
-  <text x="295" y="153" class="tag" fill="#0F6E56">PathLift [システム境界]</text>
+  <rect x="320" y="138" width="350" height="258" rx="12" class="bound"/>
+  <text x="334" y="156" class="tag" fill="#0F6E56">PathLift [システム境界]</text>
 
   <!-- CLI container -->
-  <rect x="313" y="180" width="240" height="118" rx="10" class="cont"/>
-  <text x="433" y="212" text-anchor="middle" class="th">PathLift CLI (Python)</text>
-  <text x="433" y="230" text-anchor="middle" class="tag">[Container]</text>
-  <text x="433" y="252" text-anchor="middle" class="ts">recipe検証 → 解決 → GPML I/O</text>
-  <text x="433" y="282" text-anchor="middle" class="note">内部構成(①②③④/txgene) → L3図</text>
+  <rect x="355" y="184" width="280" height="150" rx="10" class="cont"/>
+  <text x="495" y="214" text-anchor="middle" class="th">PathLift CLI (Python)</text>
+  <text x="495" y="232" text-anchor="middle" class="tag">[Container]</text>
+  <text x="495" y="256" text-anchor="middle" class="ts">recipe検証 -> 解決 -> GPML I/O</text>
+  <text x="495" y="274" text-anchor="middle" class="ts">unmapped検出 -> FASTA取得 -> BLAST</text>
+  <text x="495" y="292" text-anchor="middle" class="ts">blastp結果 -> auto curation YAML生成</text>
+  <text x="495" y="320" text-anchor="middle" class="note">内部構成(①②③/自動レスキュー/txgene/④) -> L3図</text>
 
-  <!-- left externals (grouped) -->
-  <rect x="40" y="128" width="210" height="58" rx="9" class="ext"/>
-  <text x="145" y="151" text-anchor="middle" class="th">WikiPathways</text>
-  <text x="145" y="169" text-anchor="middle" class="ts">source GPML</text>
+  <!-- left externals -->
+  <rect x="40" y="128" width="230" height="58" rx="9" class="ext"/>
+  <text x="155" y="151" text-anchor="middle" class="th">WikiPathways</text>
+  <text x="155" y="169" text-anchor="middle" class="ts">source GPML</text>
 
-  <rect x="40" y="214" width="210" height="66" rx="9" class="ext"/>
-  <text x="145" y="237" text-anchor="middle" class="th">参照データ</text>
-  <text x="145" y="255" text-anchor="middle" class="ts">対応表 / gene_info / GTF</text>
-  <text x="145" y="271" text-anchor="middle" class="tag">[External Store]</text>
+  <rect x="40" y="212" width="230" height="76" rx="9" class="ext"/>
+  <text x="155" y="236" text-anchor="middle" class="th">参照データ</text>
+  <text x="155" y="254" text-anchor="middle" class="ts">対応表 / gene_info / GTF / idmap</text>
+  <text x="155" y="272" text-anchor="middle" class="ts">reference FASTA (任意)</text>
+  <text x="155" y="284" text-anchor="middle" class="tag">[External Store]</text>
 
-  <rect x="40" y="306" width="210" height="54" rx="9" class="extd"/>
-  <text x="145" y="329" text-anchor="middle" class="th">TPM (発現)</text>
-  <text x="145" y="347" text-anchor="middle" class="ts">④用 (Phase2)</text>
+  <rect x="40" y="316" width="230" height="54" rx="9" class="extd"/>
+  <text x="155" y="339" text-anchor="middle" class="th">TPM (発現)</text>
+  <text x="155" y="357" text-anchor="middle" class="ts">④用 (Phase2)</text>
+
+  <!-- external services for auto rescue -->
+  <rect x="40" y="430" width="230" height="64" rx="9" class="svc"/>
+  <text x="155" y="454" text-anchor="middle" class="th">UniProt REST</text>
+  <text x="155" y="472" text-anchor="middle" class="ts">unmapped gene symbol -> FASTA</text>
+  <text x="155" y="486" text-anchor="middle" class="tag">[External System]</text>
+
+  <rect x="375" y="444" width="240" height="64" rx="9" class="svc"/>
+  <text x="495" y="468" text-anchor="middle" class="th">blastp</text>
+  <text x="495" y="486" text-anchor="middle" class="ts">local subject FASTA or remote nr</text>
+  <text x="495" y="500" text-anchor="middle" class="tag">[External Tool / Service]</text>
+
+  <rect x="40" y="526" width="230" height="58" rx="9" class="svc"/>
+  <text x="155" y="550" text-anchor="middle" class="th">NCBI E-utilities</text>
+  <text x="155" y="568" text-anchor="middle" class="ts">protein accession -> Gene ID</text>
 
   <!-- right outputs -->
-  <rect x="615" y="158" width="180" height="58" rx="9" class="out"/>
-  <text x="705" y="182" text-anchor="middle" class="th">出力 GPML</text>
-  <text x="705" y="200" text-anchor="middle" class="ts">暫定: assembly</text>
+  <rect x="750" y="142" width="190" height="62" rx="9" class="out"/>
+  <text x="845" y="166" text-anchor="middle" class="th">出力 GPML</text>
+  <text x="845" y="184" text-anchor="middle" class="ts">候補ノード + PathLift Comment</text>
+  <text x="845" y="198" text-anchor="middle" class="tag">暫定: assembly / Entrez等</text>
 
-  <rect x="615" y="300" width="150" height="54" rx="9" class="out"/>
-  <text x="690" y="323" text-anchor="middle" class="th">拡張 TPM</text>
-  <text x="690" y="341" text-anchor="middle" class="ts">gene_id列付き</text>
+  <rect x="744" y="238" width="202" height="68" rx="9" class="out"/>
+  <text x="845" y="262" text-anchor="middle" class="th">auto curation YAML</text>
+  <text x="845" y="280" text-anchor="middle" class="ts">blastp結果から生成</text>
+  <text x="845" y="294" text-anchor="middle" class="tag">overrides / unmapped</text>
+
+  <rect x="770" y="348" width="150" height="54" rx="9" class="out"/>
+  <text x="845" y="371" text-anchor="middle" class="th">拡張 TPM</text>
+  <text x="845" y="389" text-anchor="middle" class="ts">gene_id列付き (Phase2)</text>
 
   <!-- adjacent systems -->
-  <rect x="600" y="412" width="210" height="68" rx="9" class="extd"/>
-  <text x="705" y="436" text-anchor="middle" class="th">QPX notebook</text>
-  <text x="705" y="454" text-anchor="middle" class="ts">発現で選別 (PathLift外)</text>
-  <text x="705" y="468" text-anchor="middle" class="tag">[External System]</text>
+  <rect x="730" y="468" width="210" height="68" rx="9" class="extd"/>
+  <text x="835" y="492" text-anchor="middle" class="th">QPX notebook</text>
+  <text x="835" y="510" text-anchor="middle" class="ts">発現で選別 (PathLift外)</text>
+  <text x="835" y="524" text-anchor="middle" class="tag">[External System]</text>
 
-  <rect x="320" y="404" width="180" height="64" rx="9" class="ext"/>
-  <text x="410" y="428" text-anchor="middle" class="th">PathVisio</text>
-  <text x="410" y="446" text-anchor="middle" class="ts">開いて手動編集</text>
-  <text x="410" y="460" text-anchor="middle" class="tag">[External System]</text>
+  <rect x="465" y="558" width="190" height="64" rx="9" class="ext"/>
+  <text x="560" y="582" text-anchor="middle" class="th">PathVisio</text>
+  <text x="560" y="600" text-anchor="middle" class="ts">開いて手動編集</text>
+  <text x="560" y="614" text-anchor="middle" class="tag">[External System]</text>
 
   <!-- edges -->
-  <line x1="415" y1="102" x2="428" y2="180" class="edge" marker-end="url(#arr)"/>
-  <text x="438" y="150" class="lbl">config</text>
+  <line x1="495" y1="108" x2="495" y2="184" class="edge" marker-end="url(#arr)"/>
+  <text x="505" y="150" class="lbl">config</text>
 
-  <line x1="250" y1="157" x2="311" y2="205" class="edge" marker-end="url(#arr)"/>
-  <text x="256" y="180" class="lbl">read</text>
+  <line x1="270" y1="157" x2="353" y2="218" class="edge" marker-end="url(#arr)"/>
+  <text x="282" y="184" class="lbl">read</text>
 
-  <line x1="250" y1="247" x2="311" y2="235" class="edge" marker-end="url(#arr)"/>
-  <text x="256" y="228" class="lbl">表 / gene_info / GTF</text>
+  <line x1="270" y1="250" x2="353" y2="250" class="edge" marker-end="url(#arr)"/>
+  <text x="280" y="238" class="lbl">lookup / fold</text>
 
-  <line x1="250" y1="333" x2="311" y2="270" class="edged" marker-end="url(#arr)"/>
-  <text x="256" y="318" class="lbl">(④)</text>
+  <line x1="270" y1="343" x2="353" y2="294" class="edged" marker-end="url(#arr)"/>
+  <text x="280" y="326" class="lbl">(④ Phase2)</text>
 
-  <line x1="553" y1="206" x2="613" y2="190" class="edge" marker-end="url(#arr)"/>
-  <text x="566" y="196" class="lbl">write</text>
+  <line x1="635" y1="226" x2="748" y2="173" class="edge" marker-end="url(#arr)"/>
+  <text x="666" y="192" class="lbl">write</text>
 
-  <line x1="553" y1="258" x2="613" y2="322" class="edged" marker-end="url(#arr)"/>
-  <text x="560" y="300" class="lbl">(④) gene_id列</text>
+  <line x1="635" y1="270" x2="742" y2="270" class="edge" marker-end="url(#arr)"/>
+  <text x="650" y="260" class="lbl">blastp結果から生成</text>
 
-  <line x1="785" y1="216" x2="785" y2="410" class="edge" marker-end="url(#arr)"/>
-  <text x="792" y="320" class="lbl">出力GPML</text>
+  <path d="M744 292 C690 322 690 184 637 206" class="edge" marker-end="url(#arr)"/>
+  <text x="662" y="344" class="lbl">reload curation / rerun</text>
 
-  <line x1="690" y1="354" x2="700" y2="410" class="edge" marker-end="url(#arr)"/>
+  <line x1="270" y1="462" x2="355" y2="310" class="edge" marker-end="url(#arr)"/>
+  <text x="282" y="430" class="lbl">FASTA</text>
 
-  <line x1="615" y1="200" x2="500" y2="408" class="edge" marker-end="url(#arr)"/>
-  <text x="520" y="330" class="lbl">開いて手動編集</text>
+  <line x1="495" y1="334" x2="495" y2="442" class="edge" marker-end="url(#arr)"/>
+  <text x="506" y="402" class="lbl">query FASTA</text>
+
+  <path d="M615 462 C680 430 690 355 635 302" class="edge" marker-end="url(#arr)"/>
+  <text x="646" y="414" class="lbl">blastp results</text>
+
+  <line x1="270" y1="250" x2="373" y2="465" class="edge" marker-end="url(#arr)"/>
+  <text x="284" y="386" class="lbl">reference FASTA</text>
+
+  <line x1="375" y1="486" x2="270" y2="555" class="edged" marker-end="url(#arr)"/>
+  <text x="286" y="531" class="lbl">remote result mapping</text>
+
+  <line x1="635" y1="302" x2="768" y2="370" class="edged" marker-end="url(#arr)"/>
+  <text x="656" y="354" class="lbl">(④) gene_id列</text>
+
+  <path d="M940 204 L940 466" class="edge" marker-end="url(#arr)"/>
+  <text x="948" y="336" class="lbl">出力GPML</text>
+
+  <line x1="845" y1="402" x2="835" y2="466" class="edged" marker-end="url(#arr)"/>
+
+  <line x1="750" y1="188" x2="610" y2="556" class="edge" marker-end="url(#arr)"/>
+  <text x="646" y="534" class="lbl">開いて手動編集</text>
 </svg>

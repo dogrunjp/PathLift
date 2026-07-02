@@ -1,0 +1,26 @@
+overrides:
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907517.1|; target is Entrez
+    Gene ID
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907518.1|; target is Entrez
+    Gene ID
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907516.1|; target is Entrez
+    Gene ID
+unmapped:
+- source: PNMT
+  note: BLASTで明確なオーソログ無し
+- source: COMT
+  note: BLASTで明確なオーソログ無し
+- source: AANAT
+  note: BLASTで明確なオーソログ無し
+- source: MAOA
+  note: BLASTで明確なオーソログ無し
+- source: ASMT
+  note: BLASTで明確なオーソログ無し
+- source: MAOA
+  note: BLASTで明確なオーソログ無し

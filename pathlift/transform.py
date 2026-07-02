@@ -20,6 +20,7 @@ class PathwayTransformer:
         stats = {
             "gene_product": len(nodes), "matched": 0, "unmapped": 0,
             "candidate_genes": 0, "nodes_added": 0, "label_dependent": 0,
+            "unmapped_list": []
         }
         for el, node in nodes:
             db = (node.database or "").upper()
@@ -35,6 +36,7 @@ class PathwayTransformer:
                 sym = res.symbol or node.label or "?"
                 doc.mark_unmapped(el, f"{sym} ({res.note or 'unmapped'})")
                 stats["unmapped"] += 1
+                stats["unmapped_list"].append(sym)
         stats["txgene_unrecognized"] = len(self.resolver.txgene.unrecognized)
         doc.write(out_gpml)
         return stats

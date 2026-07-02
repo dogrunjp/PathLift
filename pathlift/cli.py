@@ -10,16 +10,24 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import yaml
 
 from .recipe import load_recipe, RecipeError
 from .ortholog import OrthologResolver
 from .transform import PathwayTransformer
+from .query_fasta import fetch_fasta_from_uniprot
+from .blast_runner import execute_blast_pipeline
+from .auto_curation import generate_curation_yaml
 
 
 def _default_out(source_gpml: str) -> str:
     stem = os.path.splitext(os.path.basename(source_gpml))[0]
     return f"{stem}.lifted.gpml"
 
+def _resource_path(rc, filename: str) -> str:
+    resource_dir = os.path.join(os.path.dirname(rc.base_dir), "resource")
+    os.makedirs(resource_dir, exist_ok=True)
+    return os.path.join(resource_dir, filename)
 
 def cmd_run(args) -> int:
     try:
@@ -27,6 +35,8 @@ def cmd_run(args) -> int:
     except RecipeError as e:
         print(str(e), file=sys.stderr)
         return 2
+    
+    recipe_stem = os.path.splitext(os.path.basename(args.recipe))[0]
 
     resolver = OrthologResolver.from_config(
         funflow_path=rc.table_path,
@@ -43,6 +53,72 @@ def cmd_run(args) -> int:
 
     out = args.output or _default_out(rc.source_gpml)
     stats = transformer.run(rc.source_gpml, out)
+
+    unmapped_list = stats.get("unmapped_list", [])
+    if unmapped_list:
+        print(f"\n[!] 迷子遺伝子を {len(unmapped_list)} 件検出。自動レスキューを開始します...")
+        
+        # フェーズ4: FASTA取得
+        source_taxid = rc.gene_info_taxid
+        query_fasta = fetch_fasta_from_uniprot(
+            unmapped_list,
+            source_taxid,
+            output_fasta=_resource_path(rc, f"{recipe_stem}_unmapped_queries.fa"),
+        )
+        
+        if query_fasta:
+            # フェーズ5: BLAST実行とフィルタリング
+            blast_tsv = _resource_path(rc, f"{recipe_stem}_unmapped_queries_results.tsv")
+
+            filtered_result = execute_blast_pipeline(
+                query_fasta,
+                rc,
+                reference_fasta=rc.reference_fasta,
+                output_tsv=blast_tsv,
+            )
+            if filtered_result:
+                auto_yaml_path = os.path.join(rc.base_dir, f"{recipe_stem}_auto_curation.yaml")
+                use_entrez_gene = not (rc.reference_fasta and os.path.exists(rc.reference_fasta))
+
+                generate_curation_yaml(
+                    filtered_result,
+                    unmapped_list,
+                    resolver.txgene,
+                    auto_yaml_path,
+                    use_entrez_gene=use_entrez_gene,
+                )
+                
+                # フェーズ7: 新しいキュレーションを適用して2周目のリフトオーバーを実行
+                print("\n[*] キュレーションを適用してGPMLを再生成します...")
+                
+                # rcオブジェクトの curation 属性を新しいファイルで上書き更新
+                with open(auto_yaml_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f) or {}
+                rc.curation = {
+                    "overrides": data.get("overrides") or [],
+                    "unmapped": data.get("unmapped") or []
+                }
+                
+                # 辞書(resolver)と変換器を再構築
+                resolver_v2 = OrthologResolver.from_config(
+                    funflow_path=rc.table_path,
+                    columns=rc.columns,
+                    gene_info_path=rc.gene_info_path,
+                    gene_info_taxid=rc.gene_info_taxid,
+                    gtf_path=rc.transcript_gene_gtf,
+                    curation=rc.curation,  # ★更新されたYAMLが読み込まれる
+                    routes=rc.routes,
+                    idmap_path=rc.idmap_path,
+                    policy=rc.policy,
+                )
+                transformer_v2 = PathwayTransformer(resolver_v2, out_namespace=rc.output_id_namespace)
+                
+                # 同じ出力パスに上書き保存
+                stats = transformer_v2.run(rc.source_gpml, out)
+                print("[+] 自動レスキューによる補完が完了しました。")
+
+            else:
+                print("[-] BLAST検索結果が得られなかったため、自動補完をスキップします。")
 
     routes_on = [r for r in ("symbol", "pid", "compute") if rc.routes.get(r)]
     print("== pathlift run ==")
