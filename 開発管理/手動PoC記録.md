@@ -137,12 +137,13 @@ arabidopsis_gene_id	arabidopsis_symbol	chlamy_gene_id
 4. ggsearch36の検索結果TSV（`aracyc_to_chlamycyc_best_hits_output.tsv`）から`arabidopsis_gene_id`・`chlamy_gene_id`列を確認。
 5. NCBI `Arabidopsis_thaliana.gene_info` をダウンロードし、`awk`でAGIコード（LocusTag列）→Symbol列を抽出して`agi2symbol.tsv`を作成。
 6. `awk`で`agi2symbol.tsv`をキーにして、元のTSVの`arabidopsis_gene_id`列の直後に`arabidopsis_symbol`列を挿入し、`merged_with_symbol.tsv`を作成。
-7. YAML（`ALACAT2_PWY_Ara.yaml`）の`ortholog_resolver.provided_table.path`および`columns.source_symbol`をこのファイル・列名に合わせて設定。
+7. YAML（`ALACAT2_PWY_Ara.yaml`、`ALANINE-DEG3-PWY_2013a_Ara.yaml`）の`ortholog_resolver.provided_table.path`および`columns.source_symbol`をこのファイル・列名に合わせて設定。
 8. `pathlift run configs/ALACAT2_PWY_Ara.yaml -o out_ALACAT2_PWY_Ara.gpml` を実行。
 9. 実行は通ったが `GeneProduct: 0 / matched: 0 / 候補gene総数: 0` となり、変換対象が1件も検出されず。
 10. GPMLファイルの中身を確認したところ、**GPML2013a形式ではなくGPML2021形式**（`type="GeneProduct"`が小文字、`<Xref identifier=".." dataSource="..">`という新属性名）であることが問題であると判明。pathliftが旧形式（`Type=`大文字、`Xref ID=`/`Database=`）を前提にパースしているためマッチ0件になったと推測。
-11. 烏野さんが作成してくださった変換ツールを用いてGPML2013aにダウングレードしたGPMLファイルで変換を実行したところGeneProductの認識はできたが、` GeneProduct: 6 / matched  : 0 / unmapped : 6`であった。
-（テストで1つのGPMLしか実行できていないため全てが変換できないのかは不明）
+11. 烏野さんが作成してくださった変換ツールを用いて、GPML2021形式のファイルをGPML2013a形式へダウングレード。
+12. `ALACAT2_PWY.gpml`を変換したところ、中身が空になってしまった（変換時に何らかのデータが失われたことが原因と考えられる）。そのため、代わりに同ツールで変換した`ALANINE-DEG3-PWY_2013a.gpml`を使用したところ、GeneProductの認識はできたが、`GeneProduct: 6 / matched: 0 / unmapped: 6`となった。これは変換ツール自体の問題ではなく、対応表（`merged_with_symbol.tsv`）の中に、このパスウェイに含まれる6件の遺伝子IDが単純に存在しなかったためと考えられる。
+    （今回は1つのGPMLファイルでしかテストできていないため、この変換ツールが他のパスウェイでも同様の問題を起こすのかは不明）
 
 ### 観察
 - RBH_plusを用いて対応表を作成しようとしたがmRNA FASTAではorthologが数個しか出力されなかった。
@@ -159,7 +160,7 @@ arabidopsis_gene_id	arabidopsis_symbol	chlamy_gene_id
 
 ---
 
-## PoC #1 —（日付・テーマを記入）
+## PoC #2 —（日付・テーマを記入）
 
 ### 目的
 
