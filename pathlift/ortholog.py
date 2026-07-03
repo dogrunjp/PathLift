@@ -86,7 +86,7 @@ def build_curation(curation: dict | None) -> tuple[dict, set]:
             src = (ov.get("source") or "").strip()
             tgt = (ov.get("target") or "").strip()
             if src and tgt:
-                override_index[src.upper()].append((tgt, ov.get("note")))
+                override_index[src.upper()].append((tgt, ov.get("note"), ov.get("target_label")))
         for um in curation.get("unmapped") or []:
             src = (um.get("source") or "").strip()
             if src:
@@ -179,8 +179,8 @@ class OrthologResolver:
 
         # curation override(手動で候補を追加/固定)
         for key in keys:
-            for target, _note in self.override_index.get(key, ()):
-                res.add_candidate(target, [], [Route.OVERRIDE])
+            for target, _note, target_label in self.override_index.get(key, ()):
+                res.add_candidate(target, [], [Route.OVERRIDE], label=target_label)
 
         if not res.candidates:
             res.mark_unmapped("no hit")

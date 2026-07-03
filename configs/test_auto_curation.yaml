@@ -1,14 +1,6 @@
-overrides:
-- source: TPH1
-  target: MSTRG.294
-  note: blastpで自動補完
-- source: TPH1
-  target: MSTRG.294
-  note: blastpで自動補完
-- source: TPH1
-  target: MSTRG.294
-  note: blastpで自動補完
 unmapped:
+- source: TPH1
+  note: BLASTで明確なオーソログ無し
 - source: PNMT
   note: BLASTで明確なオーソログ無し
 - source: COMT

@@ -58,6 +58,32 @@ def ncbi_protein_to_gene_id(sseqid):
         print(f"  -> [NCBI XML解析失敗] {accession}: {e}")
         return None
 
+def ncbi_gene_id_to_symbol(gene_id):
+    try:
+        url = (
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+            f"?db=gene&id={gene_id}&retmode=xml"
+        )
+
+        with urllib.request.urlopen(url) as response:
+            root = ET.fromstring(response.read())
+
+        name_el = root.find(".//DocumentSummary/Name")
+        if name_el is not None and name_el.text:
+            return name_el.text
+
+        return None
+
+    except urllib.error.HTTPError as e:
+        print(f"  -> [NCBI Gene symbol取得失敗] {gene_id}: HTTP {e.code}")
+        return None
+    except urllib.error.URLError as e:
+        print(f"  -> [NCBI Gene symbol通信エラー] {gene_id}: {e}")
+        return None
+    except ET.ParseError as e:
+        print(f"  -> [NCBI Gene symbol XML解析失敗] {gene_id}: {e}")
+        return None
+    
 def generate_curation_yaml(
     filtered_tsv,
     unmapped_list,
@@ -82,8 +108,9 @@ def generate_curation_yaml(
                 if len(row) < 2:
                     continue
 
-                source = row[0]
+                source = row[0].split("|")[0]
                 target_protein = row[1]
+                target_label = None
 
                 if use_entrez_gene:
                     if target_protein not in protein_gene_cache:
@@ -95,6 +122,9 @@ def generate_curation_yaml(
                 if not target_gene:
                     continue
 
+                if use_entrez_gene:
+                    target_label = ncbi_gene_id_to_symbol(target_gene)
+
                 note = "blastpで自動補完"
                 if use_entrez_gene:
                     note = (
@@ -103,11 +133,16 @@ def generate_curation_yaml(
                         f"target is Entrez Gene ID"
                     )
 
-                overrides.append({
+                override = {
                     "source": source,
                     "target": target_gene,
                     "note": note,
-                })
+                }
+
+                if target_label:
+                    override["target_label"] = target_label
+
+                overrides.append(override)
                 found_sources.add(source)
 
     # 2. BLASTでも見つからなかった遺伝子を unmapped に分類
