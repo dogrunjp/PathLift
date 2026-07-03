@@ -108,7 +108,7 @@ def generate_curation_yaml(
                 if len(row) < 2:
                     continue
 
-                source = row[0]
+                source = row[0].split("|")[0]
                 target_protein = row[1]
                 target_label = None
 
