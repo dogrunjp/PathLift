@@ -105,6 +105,59 @@ GPML各ノードのgeneID
 | その他 | 仕様書に「対応表が参考論文の参考文献内にある場合もある」という注記がある。研究者が対応表を見つけるための案内をドキュメント or ツールのエラーメッセージとして提供できるか検討する。 |
 
 ---
+## PoC #1 — 2026-07-03：Arabidopsis→Chlamydomonas パスウェイリフトオーバー
+
+### 目的
+Arabidopsis thaliana のパスウェイ（GPML形式）を、オルソログ対応表を用いて Chlamydomonas reinhardtii の遺伝子IDにリフトオーバー（変換）できるか検証する。
+
+### 環境・データ
+| 項目 | 内容 |
+|------|------|
+| 生物種 | Arabidopsis thaliana（taxid: 3702）→ Chlamydomonas reinhardtii（taxid: 3055） |
+| 使用ツール | ggsearch, pathlift |
+| オルソログ対応表の出典・作成手法 | ggsearch36（FASTA36パッケージ、global-global alignment）による相同性検索結果（`aracyc_to_chlamycyc_best_hits_output.tsv`）。加えてNCBI `Arabidopsis_thaliana.gene_info` からAGIコード→シンボルの対応表（`agi2symbol.tsv`）を作成し、`awk`でJOINしてsymbol列を追加。 |
+| GPMLファイルの取得元 | plantcycから得たデータをCyc_to_wikiを用いて変換したGPMLファイル|
+| 発現データの有無 | 無し |
+
+### オルソログ変換テーブルの実際の列構成
+
+```
+arabidopsis_gene_id	arabidopsis_symbol	chlamy_gene_id
+```
+
+- Arabidopsis側IDカラム：`arabidopsis_gene_id`（AGIコード、例: AT1G01090）
+- 対象種側のIDカラム：`chlamy_gene_id`（例: CRE02.G099850_4532）
+- 1:N対応の件数・傾向：
+- IDマッピングが存在しなかった遺伝子の割合：
+
+### 手順
+1. Arabidopsis→Chlamydomonasの遺伝子対応表をRBH_plusを用いて作成。
+2. refseqから入手したプロテオームFASTAではortholog抽出に成功したが、PMN由来・refseq由来いずれのmRNA FASTAでもほとんどorthologの出力ができなかった。
+3. 遺伝子ID同士の対応を得ることが必要だったため、弓矢さんがggsearchを用いて配列類似性検索を実施してくださり、ortholog抽出に成功。
+4. ggsearch36の検索結果TSV（`aracyc_to_chlamycyc_best_hits_output.tsv`）から`arabidopsis_gene_id`・`chlamy_gene_id`列を確認。
+5. NCBI `Arabidopsis_thaliana.gene_info` をダウンロードし、`awk`でAGIコード（LocusTag列）→Symbol列を抽出して`agi2symbol.tsv`を作成。
+6. `awk`で`agi2symbol.tsv`をキーにして、元のTSVの`arabidopsis_gene_id`列の直後に`arabidopsis_symbol`列を挿入し、`merged_with_symbol.tsv`を作成。
+7. YAML（`ALACAT2_PWY_Ara.yaml`）の`ortholog_resolver.provided_table.path`および`columns.source_symbol`をこのファイル・列名に合わせて設定。
+8. `pathlift run configs/ALACAT2_PWY_Ara.yaml -o out_ALACAT2_PWY_Ara.gpml` を実行。
+9. 実行は通ったが `GeneProduct: 0 / matched: 0 / 候補gene総数: 0` となり、変換対象が1件も検出されず。
+10. GPMLファイルの中身を確認したところ、**GPML2013a形式ではなくGPML2021形式**（`type="GeneProduct"`が小文字、`<Xref identifier=".." dataSource="..">`という新属性名）であることが問題であると判明。pathliftが旧形式（`Type=`大文字、`Xref ID=`/`Database=`）を前提にパースしているためマッチ0件になったと推測。
+11. 烏野さんが作成してくださった変換ツールを用いてGPML2013aにダウングレードしたGPMLファイルで変換を実行したところGeneProductの認識はできたが、` GeneProduct: 6 / matched  : 0 / unmapped : 6`であった。
+（テストで1つのGPMLしか実行できていないため全てが変換できないのかは不明）
+
+### 観察
+- RBH_plusを用いて対応表を作成しようとしたがmRNA FASTAではorthologが数個しか出力されなかった。
+- ggsearch36の出力にはシンボル情報が含まれないため、シンボルマッチング用には別途NCBI gene_infoのような外部の遺伝子ID⇔シンボル対応表を用意し、後からJOINする運用が必要だった。
+- GPML2021からGPML2013aへのダウングレードも可能だが、Xref情報や新しいAnnotationが失われるなどの問題がある。
+
+### 【設計へのフィードバック】
+| 関連TODO | 気づき・修正が必要な設計判断 |
+|----------|------------------------------|
+| A-1 | GPMLのバージョン（2013a / 2021）をrecipe読み込み時に自動判定するか、非対応バージョンなら明示的にエラーを出す仕組みが必要（現状は無言で0件になる） |
+| A-2 | pathliftがGPML2021に非対応であることが判明。対応の要否・工数を検討する必要がある |
+| A-4 | ortholog対応表にsymbol列が最初から含まれていないケース（ggsearch36等の相同性検索ツール由来）のため、gene_info等からのsymbol補完を公式のワークフロー・スクリプトとして用意しておくことを検討|
+| その他 | `source_gpml`のパスが見つからない場合のエラーと、列が見つからない場合のエラーが同じ「recipe検証に失敗」として並列に出るため、両方のエラーがある場合にどちらが根本原因か切り分けにくい。エラーメッセージに「ファイルパスを確認」「列名の大文字小文字を確認」等のヒントがあると良い |
+
+---
 
 ## PoC #1 —（日付・テーマを記入）
 
