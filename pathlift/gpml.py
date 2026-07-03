@@ -92,6 +92,8 @@ class GpmlDocument:
                 g.set(axis, str(float(v) + d))
 
     def _apply(self, el, cand, out_namespace: str) -> None:
+        if cand.label:
+            el.set("TextLabel", cand.label)
         self._set_xref(el, out_namespace, cand.gene_id)
         routes = ",".join(sorted(r.value for r in cand.routes))
         tx = ",".join(cand.transcript_ids())

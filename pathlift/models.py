@@ -60,6 +60,7 @@ class Candidate:
     gene_id: str                                          # assembly gene (MSTRG.x / g####) = 出力XREF
     transcripts: list[TranscriptHit] = field(default_factory=list)
     routes: set[Route] = field(default_factory=set)       # 当たったルート(複数可)
+    label: str | None = None
 
     def transcript_ids(self) -> list[str]:
         return [t.transcript_id for t in self.transcripts]
@@ -94,7 +95,7 @@ class ResolveResult:
     def transcript_count(self) -> int:
         return sum(len(c.transcripts) for c in self.candidates)
 
-    def add_candidate(self, gene_id: str, transcripts=(), routes=()) -> Candidate:
+    def add_candidate(self, gene_id: str, transcripts=(), routes=(), label=None) -> Candidate:
         """gene_id が既出なら統合(transcript和集合・route和集合)、無ければ新規。
         いずれも status を MATCHED にする。routes は Route か文字列を受ける。"""
         rs = {r if isinstance(r, Route) else Route(r) for r in routes}
@@ -102,9 +103,11 @@ class ResolveResult:
             if c.gene_id == gene_id:
                 c.add_transcripts(transcripts)
                 c.routes |= rs
+                if label and not c.label:
+                    c.label = label
                 self.status = ResolveStatus.MATCHED
                 return c
-        c = Candidate(gene_id=gene_id, routes=rs)
+        c = Candidate(gene_id=gene_id, routes=rs, label=label)
         c.add_transcripts(transcripts)
         self.candidates.append(c)
         self.status = ResolveStatus.MATCHED
