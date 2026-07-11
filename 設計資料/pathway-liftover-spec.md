@@ -79,7 +79,7 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 `symbol`/`pid`/`override` の通常解決を終えても unmapped が残る場合、CLI（`cmd_run`）が追加で recall 回収を試みる。
 
 1. **FASTA取得**：unmapped の遺伝子記号ごとに UniProt REST（`uniprotkb/search`）から source 種のアミノ酸配列を取得する（`query_fasta.py`）。reviewed エントリを優先し、無ければ fallback で再検索。
-2. **blastp実行**：`target.reference_fasta` が指定されていればローカル `blastp -subject`、無ければ NCBI `nr` への remote blastp（`target.taxid` で entrez_query 絞込）を実行する（`blast_runner.py`）。結果を長さ・カバー率でフィルタする。
+2. **blastp実行**：`target.reference_fasta` が指定されていればローカル `blastp -subject`、無ければ NCBI `nr` への remote blastp（`target.taxid` で entrez_query 絞込）を実行する（`blast_runner.py`）。結果を**RBH_plus由来の固定フィルター**（`length>=50` かつ `length/qlen>=0.6` かつ `length/slen>=0.6` かつ `qlen/slen>=0.7` かつ `slen/qlen>=0.7`。identityは見ない）でフィルタする。RBH_plusとPathLiftで同一ロジックを保つため、recipeでは調整しない固定値（`recipe.schema.md`参照）。
 3. **override自動生成**：フィルタ後のヒットを curation の `overrides`（ヒットなしは `unmapped`）として `<recipeのstem>_auto_curation.yaml` に書き出す（`auto_curation.py`）。ローカルblastpの場合は txgene で target 遺伝子IDに畳み込み、remote（nr）の場合は NCBI E-utilities で protein→gene ID を引く。
 4. **再解決**：生成した override を curation として読み込み直し、`OrthologResolver`／`PathwayTransformer` を再構築して2周目の変換を実行し、同じ出力パスに上書きする。
 
@@ -87,7 +87,7 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 
 - 候補は `Route.OVERRIDE` として記録される。`models.Route.COMPUTE` という enum 値は定義済みだが、現状コードからは使われていない（provenance 上は「BLAST由来」と「人手override」が区別できない）。
 - `overrides` には任意で `target_label`（GPMLの`TextLabel`を上書きする値）を持たせられる（§4のcurationスキーマ拡張、`ortholog.py`/`gpml.py`）。
-- **`ortholog_resolver.routes.compute` フラグと `compute_fallback.blastp` の閾値は現状参照されない**（`recipe.schema.md` 該当箇所の既知のギャップを参照）。unmapped が1件でもあれば `routes.compute` の値に関わらず自動キュレーションが発動する。これは「ランタイムはrecipeの検証結果のみに従う」という本仕様の不変条件（1章・7章）に反するため、次の実装で `routes.compute` によるon/off・`compute_fallback.blastp` の閾値注入を配線する必要がある。
+- **`ortholog_resolver.routes.compute` フラグと `compute_fallback.blastp.evalue` は現状参照されない**（`recipe.schema.md` 該当箇所の既知のギャップを参照）。unmapped が1件でもあれば `routes.compute` の値に関わらず自動キュレーションが発動し、evalueも`1e-5`固定。これは「ランタイムはrecipeの検証結果のみに従う」という本仕様の不変条件（1章・7章）に反するため、次の実装で `routes.compute` によるon/off・`compute_fallback.blastp.evalue` の注入を配線する必要がある（フィルタ閾値自体はRBH_plus由来の固定ロジックのままでよく、recipe化しない）。
 
 ## 関連
 - 根拠・知見：`PoC知見と設計判断.md`
