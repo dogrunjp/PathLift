@@ -47,7 +47,7 @@ PathLift/
 2. `pathway-liftover-spec.md`（正規仕様）
 3. `recipe.schema.md`（recipe/curation スキーマ）
 4. `c4_model.md` + 3つの SVG（構成）
-5. `conversion_flow.md`（ランタイムフロー）
+5. `runtime_flow_and_branching.md`（ランタイムフロー・設定分岐。旧`conversion_flow.md`）
 
 ### 実行
 ```

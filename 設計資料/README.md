@@ -8,7 +8,7 @@ PathLift の設計は **3例の実データ PoC から導いた**。本ディレ
 2. `pathway-liftover-spec.md` — 正規仕様（何をするか・入出力契約・スコープ）。
 3. `recipe.schema.md` — recipe / curation サイドカーのスキーマ。
 4. `c4_model.md` + `pathlift_c4_l3_after_implementation.svg` — コンポーネント構成。
-5. `conversion_flow.md` — ランタイムの変換フロー（mermaid）。
+5. `runtime_flow_and_branching.md` — ランタイムの実行時フロー・設定分岐（mermaid）。旧`conversion_flow.md`。
 
 関連：`../開発管理/手動PoC記録.md`（バイト氏の手動 lift 記録。MISS の支配機構を説明する一次資料）。
 

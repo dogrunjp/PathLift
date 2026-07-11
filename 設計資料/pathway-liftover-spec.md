@@ -92,4 +92,4 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 ## 関連
 - 根拠・知見：`PoC知見と設計判断.md`
 - スキーマ詳細：`recipe.schema.md`
-- 構成：`c4_model.md` / 変換フロー：`conversion_flow.md`
+- 構成：`c4_model.md` / 実行時フロー・設定分岐：`runtime_flow_and_branching.md`
