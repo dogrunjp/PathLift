@@ -54,9 +54,12 @@ recipeは、**人手・アドホックな発見と判定の「結果」を固定
 | `gene_info.taxid` | int | — | `9606` | 源(ヒト)の tax_id |
 | `routes.symbol` | bool | — | `true` | 主ルート（記号、再現率重視） |
 | `routes.pid` | bool | — | `false` | 精密ルート。`true`なら`idmap`必須 |
-| `routes.compute` | bool | — | `false` | blastp計算。PoCは保留（curationで代替） |
+| `routes.compute` | bool | — | `false` | blastp計算フォールバック。**実装済**（2026-07、`pathlift/auto_curation.py`ほか）。詳細は`pathway-liftover-spec.md` §8 |
 | `idmap` | path | 条件付 | — | `source_id<TAB>ENSP`。`routes.pid=true`で必須 |
+| `target.reference_fasta` | path | 任意 | — | target種のローカル参照FASTA（タンパク質）。指定時は`compute`ルートがローカルblastpを使う。無指定ならNCBI nrへのremote blastp（`target.taxid`で絞込） |
 | `compute_fallback.blastp` | object | 任意 | — | `routes.compute=true`時のみ。`{evalue, identity_min, coverage_min}` |
+
+> **既知のギャップ（2026-07-11時点）**：`compute_fallback.blastp`の各閾値、および`routes.compute`フラグ自体は、現在の実装（`pathlift/cli.py`・`pathlift/blast_runner.py`）から**参照されていない**。実際は「unmappedが1件でもあれば無条件に自動キュレーション（BLASTレスキュー）が発動」し、フィルタ閾値（`length>=50`・カバー率60%等）は`blast_runner.py`にハードコードされている。`routes.compute=false`でもレスキューが走ってしまう状態で、「ランタイムはrecipeの判定のみに従う」という不変条件（本ファイル冒頭・`CLAUDE.md`）に反する。設計上はここに記載の2フィールドがcompute routeの唯一の制御点であるべきなので、**実装側の配線修正（`routes.compute`でのon/off、`compute_fallback.blastp`の値をblast_runner.pyに渡す）が別途必要**。
 
 - 解決器は**候補集合**を返す: `[{gene, transcripts[], routes}]` ＋ status。各候補はどのルートで当たったか(provenance)を持つ。
 - 記号正規化: Entrezノードは`gene_info`の`GeneID→公式記号`（一意キーなので衝突しない）。HGNCノードはIDがそのまま公式記号。**synonym経由の正規化はしない**（別遺伝子と衝突するため）。
@@ -157,7 +160,7 @@ ortholog_resolver:
   routes:
     symbol: true        # 主・再現率重視
     pid: false          # 精密。要 idmap(source_id->ENSP)。PoCは保留
-    compute: false      # blastp。PoCは保留(curationで代替)
+    compute: false      # blastp自動キュレーション。実装済(§本ファイル上部・spec §8)。既知のギャップにより現状は値に関わらず発動する
   idmap: null
 
 expression:                            # Phase2。最初の通しでは省略可

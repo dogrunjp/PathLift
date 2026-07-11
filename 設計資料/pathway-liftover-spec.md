@@ -16,7 +16,7 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 - **候補の選別**：発現データで偽陽性を刈るのは後段（④発現リンカが TPM に結合キーを足し、選別は **QPX notebook**＝PathLift 外で行う）。
 - **エッジ/相互作用の生成**：理想は target ノードを Group で束ね、PathVisio 上で手動構造編集する。エッジは追加しない（設計判断）。
 - **座標の最適化**：重なり回避の最小限のみ（G章で改善保留）。
-- **curation の自動化**：MISS の素性切り分けや override は人間（recipe のサイドカー）の責務。
+- **curation の全自動化**：MISS の素性切り分け・確定判断は引き続き人間（recipe のサイドカー）の責務。ただし unmapped の recall 回収に限っては、BLAST による自動キュレーション（`compute` ルート、§8）が override を自動生成する（2026-07 実装、人手 curation はこれを上書き・追記できる）。
 
 ## 2. 入出力契約
 
@@ -44,7 +44,7 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 | `symbol` | source ノードを公式記号に正規化し、表の記号列で引く | 主・実装済 |
 | `pid` | source ID→ENSP（idmap）で表の pid 列を引く | 実装済（idmap 必須・通常オフ） |
 | `override` | curation の手動対応を候補に追加 | 実装済 |
-| `compute` | blastp/tblastn 計算フォールバック | **未実装**（将来。recall 回収の要） |
+| `compute` | blastp 計算フォールバック（recall 回収の要） | **実装済**（2026-07。自動キュレーションとして。§8参照。tblastnは未対応） |
 
 記号導出の優先順位：Entrez→gene_info、HGNC→ID直、**それ以外→TextLabel**。
 → 非 Entrez/HGNC（UniProt/Ensembl）は TextLabel 依存になる。潜在リスクは `PoC知見と設計判断.md` E章参照。
@@ -71,6 +71,23 @@ PathLift は、WikiPathways の **GPML パスウェイ**を、**オーソログ�
 
 - recipe は**ランタイム前に検証**する（`recipe.py`）。検証失敗なら `RecipeError` を投げ、ランタイムに入れない＝「下流はパス探索も判定もしない」を担保。
 - 相対パスは **recipe ファイルのディレクトリ基準**で解決する。
+
+## 8. 自動キュレーション（`compute` ルート）
+
+> 2026-07、林さんのPR（#1・#3）で実装。`routes.compute` の実体。
+
+`symbol`/`pid`/`override` の通常解決を終えても unmapped が残る場合、CLI（`cmd_run`）が追加で recall 回収を試みる。
+
+1. **FASTA取得**：unmapped の遺伝子記号ごとに UniProt REST（`uniprotkb/search`）から source 種のアミノ酸配列を取得する（`query_fasta.py`）。reviewed エントリを優先し、無ければ fallback で再検索。
+2. **blastp実行**：`target.reference_fasta` が指定されていればローカル `blastp -subject`、無ければ NCBI `nr` への remote blastp（`target.taxid` で entrez_query 絞込）を実行する（`blast_runner.py`）。結果を長さ・カバー率でフィルタする。
+3. **override自動生成**：フィルタ後のヒットを curation の `overrides`（ヒットなしは `unmapped`）として `<recipeのstem>_auto_curation.yaml` に書き出す（`auto_curation.py`）。ローカルblastpの場合は txgene で target 遺伝子IDに畳み込み、remote（nr）の場合は NCBI E-utilities で protein→gene ID を引く。
+4. **再解決**：生成した override を curation として読み込み直し、`OrthologResolver`／`PathwayTransformer` を再構築して2周目の変換を実行し、同じ出力パスに上書きする。
+
+**実装上の注意点（設計と一致しない点）**：
+
+- 候補は `Route.OVERRIDE` として記録される。`models.Route.COMPUTE` という enum 値は定義済みだが、現状コードからは使われていない（provenance 上は「BLAST由来」と「人手override」が区別できない）。
+- `overrides` には任意で `target_label`（GPMLの`TextLabel`を上書きする値）を持たせられる（§4のcurationスキーマ拡張、`ortholog.py`/`gpml.py`）。
+- **`ortholog_resolver.routes.compute` フラグと `compute_fallback.blastp` の閾値は現状参照されない**（`recipe.schema.md` 該当箇所の既知のギャップを参照）。unmapped が1件でもあれば `routes.compute` の値に関わらず自動キュレーションが発動する。これは「ランタイムはrecipeの検証結果のみに従う」という本仕様の不変条件（1章・7章）に反するため、次の実装で `routes.compute` によるon/off・`compute_fallback.blastp` の閾値注入を配線する必要がある。
 
 ## 関連
 - 根拠・知見：`PoC知見と設計判断.md`
