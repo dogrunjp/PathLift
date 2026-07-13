@@ -39,20 +39,27 @@ def filter_blast_results(input_tsv):
 
 def execute_blast_pipeline(query_fasta, recipe, reference_fasta=None, output_tsv="unmapped_queries_results.tsv"):
     """統合されたBLAST実行関数"""
-    
+
+    # recipe の compute_fallback.blastp.evalue を使う。フィルタ閾値(identity/coverage)は
+    # RBH_plus由来の固定ロジック(filter_blast_results)でrecipe化しない(recipe.schema.md参照)。
+    evalue = str(
+        ((getattr(recipe, "compute_fallback", None) or {}).get("blastp") or {}).get("evalue")
+        or "1e-5"
+    )
+
     # 1. ローカル/リモートの分岐コマンド構築
     if reference_fasta and os.path.exists(reference_fasta):
         print(f"[*] ローカルFASTA検索: {reference_fasta}")
-        cmd = ["blastp", "-query", query_fasta, "-subject", reference_fasta, 
-               "-evalue", "1e-5", "-outfmt", "6 qseqid sseqid pident length qlen slen evalue bitscore",
+        cmd = ["blastp", "-query", query_fasta, "-subject", reference_fasta,
+               "-evalue", evalue, "-outfmt", "6 qseqid sseqid pident length qlen slen evalue bitscore",
                "-out", output_tsv]
     else:
         # recipe オブジェクトから taxid を取得
         taxid = getattr(recipe, 'target_taxid', None)
         print(f"[*] リモートBLAST検索 (TaxID: {taxid})")
-        cmd = ["blastp", "-query", query_fasta, "-db", "nr", 
+        cmd = ["blastp", "-query", query_fasta, "-db", "nr",
                "-entrez_query", f"txid{taxid}[ORGN]", "-remote",
-               "-evalue", "1e-5", "-outfmt", "6 qseqid sseqid pident length qlen slen evalue bitscore",
+               "-evalue", evalue, "-outfmt", "6 qseqid sseqid pident length qlen slen evalue bitscore",
                "-out", output_tsv]
 
     # 2. 実行

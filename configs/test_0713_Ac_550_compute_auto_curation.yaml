@@ -1,0 +1,74 @@
+overrides:
+- source: TPH1
+  target: '108003440'
+  note: blastp remoteで自動補完; original protein=ref|XP_016921168.2|; target is Entrez
+    Gene ID
+  target_label: Trhn
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907517.1|; target is Entrez
+    Gene ID
+  target_label: Hn
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907518.1|; target is Entrez
+    Gene ID
+  target_label: Hn
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907516.1|; target is Entrez
+    Gene ID
+  target_label: Hn
+- source: TPH1
+  target: '107999422'
+  note: blastp remoteで自動補完; original protein=ref|XP_061933092.1|; target is Entrez
+    Gene ID
+  target_label: ple
+- source: TPH1
+  target: '107999422'
+  note: blastp remoteで自動補完; original protein=ref|XP_061933091.1|; target is Entrez
+    Gene ID
+  target_label: ple
+- source: TPH1
+  target: '108003440'
+  note: blastp remoteで自動補完; original protein=ref|XP_016921168.2|; target is Entrez
+    Gene ID
+  target_label: Trhn
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907517.1|; target is Entrez
+    Gene ID
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907518.1|; target is Entrez
+    Gene ID
+  target_label: Hn
+- source: TPH1
+  target: '107994899'
+  note: blastp remoteで自動補完; original protein=ref|XP_016907516.1|; target is Entrez
+    Gene ID
+  target_label: Hn
+- source: TPH1
+  target: '107999422'
+  note: blastp remoteで自動補完; original protein=ref|XP_061933092.1|; target is Entrez
+    Gene ID
+  target_label: ple
+- source: TPH1
+  target: '107999422'
+  note: blastp remoteで自動補完; original protein=ref|XP_061933091.1|; target is Entrez
+    Gene ID
+  target_label: ple
+- source: MAOA
+  target: '107999755'
+  note: blastp remoteで自動補完; original protein=ref|XP_061942772.1|; target is Entrez
+    Gene ID
+  target_label: LOC107999755
+unmapped:
+- source: PNMT
+  note: BLASTで明確なオーソログ無し
+- source: COMT
+  note: BLASTで明確なオーソログ無し
+- source: AANAT
+  note: BLASTで明確なオーソログ無し
+- source: ASMT
+  note: BLASTで明確なオーソログ無し

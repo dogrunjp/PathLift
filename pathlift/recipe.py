@@ -130,16 +130,14 @@ def load_recipe(path: str) -> Recipe:
         else:
             need_file(idmap_path, "idmap")
 
+    # compute_fallback.blastp: evalue のみ。フィルタ閾値(identity/coverage)は
+    # RBH_plus由来の固定ロジック(blast_runner.py)でrecipe化しない(recipe.schema.md参照)。
     compute_fallback = res.get("compute_fallback")
     if routes.get("compute"):
         bp = (compute_fallback or {}).get("blastp") or {}
         ev = bp.get("evalue")
         if ev is None or float(ev) <= 0:
             errs.append("routes.compute=true には compute_fallback.blastp.evalue(>0) が必要")
-        for k in ("identity_min", "coverage_min"):
-            v = bp.get(k)
-            if v is not None and not (0 <= float(v) <= 100):
-                errs.append(f"compute_fallback.blastp.{k} は 0-100")
 
     # expression(任意)
     tpm_path = rp(expr.get("tpm"))

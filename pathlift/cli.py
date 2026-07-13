@@ -55,7 +55,10 @@ def cmd_run(args) -> int:
     stats = transformer.run(rc.source_gpml, out)
 
     unmapped_list = stats.get("unmapped_list", [])
-    if unmapped_list:
+    if unmapped_list and not rc.routes.get("compute"):
+        print(f"\n[!] 迷子遺伝子を {len(unmapped_list)} 件検出しましたが、"
+              f"routes.compute が無効なため自動レスキューはスキップします。")
+    elif unmapped_list:
         print(f"\n[!] 迷子遺伝子を {len(unmapped_list)} 件検出。自動レスキューを開始します...")
         
         # フェーズ4: FASTA取得

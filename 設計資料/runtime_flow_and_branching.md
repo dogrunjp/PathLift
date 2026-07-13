@@ -87,6 +87,7 @@ flowchart TD
     CAND -->|no| MU2[unmapped: no hit]
 ```
 
+
 > ⑤（BLASTレスキュー）は resolve() の内部処理ではなく、CLI（`cli.py`）が stats 確認後に
 > curation を差し替えて①③②全体をもう一周させる形で実装されている（上記1.参照）。
 > resolve() 自身にとっては「override が増えた2周目」でしかなく、compute専用の分岐は無い。
