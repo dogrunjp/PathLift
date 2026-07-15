@@ -82,6 +82,7 @@ class ResolveResult:
     candidates: list[Candidate] = field(default_factory=list)
     status: ResolveStatus = ResolveStatus.UNMAPPED
     note: str | None = None                   # unmapped理由・備考
+    unmapped_reason: str | None = None        # 機械判定用の未解決理由
 
     @property
     def is_matched(self) -> bool:
@@ -113,7 +114,13 @@ class ResolveResult:
         self.status = ResolveStatus.MATCHED
         return c
 
-    def mark_unmapped(self, note: str | None = None) -> None:
+    def mark_unmapped(
+        self,
+        note: str | None = None,
+        reason: str | None = None,
+    ) -> None:
         self.status = ResolveStatus.UNMAPPED
         if note:
             self.note = note
+        if reason:
+            self.unmapped_reason = reason

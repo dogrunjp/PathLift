@@ -89,6 +89,7 @@ def cmd_run(args) -> int:
                     resolver.txgene,
                     auto_yaml_path,
                     use_entrez_gene=use_entrez_gene,
+                    query_fasta=query_fasta,
                 )
                 
                 # フェーズ7: 新しいキュレーションを適用して2周目のリフトオーバーを実行

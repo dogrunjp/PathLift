@@ -83,21 +83,44 @@ def ncbi_gene_id_to_symbol(gene_id):
     except ET.ParseError as e:
         print(f"  -> [NCBI Gene symbol XML解析失敗] {gene_id}: {e}")
         return None
-    
+
+
+def load_queried_sources(query_fasta):
+    """BLASTpへ実際に渡したクエリ遺伝子をFASTAヘッダーから取得する。"""
+    queried_sources = set()
+
+    if not query_fasta or not os.path.exists(query_fasta):
+        return queried_sources
+
+    with open(query_fasta, encoding="utf-8") as f:
+        for line in f:
+            if not line.startswith(">"):
+                continue
+
+            # >GENE または >GENE|reviewed1
+            source = line[1:].strip().split("|")[0]
+            if source:
+                queried_sources.add(source.upper())
+
+    return queried_sources
+
+
 def generate_curation_yaml(
     filtered_tsv,
     unmapped_list,
     txgene,
     output_yaml="auto_curation.yaml",
     use_entrez_gene=False,
+    query_fasta=None,
 ):
     """
     BLASTのフィルタリング結果(TSV)から .curation.yaml を自動生成する
     """
     overrides = []
     unmapped = []
-    found_sources = set()
+    blast_hit_sources = set()
     protein_gene_cache = {}
+    queried_sources = load_queried_sources(query_fasta)
 
     # 1. BLAST結果の読み込みと overrides の作成
     if os.path.exists(filtered_tsv):
@@ -109,8 +132,12 @@ def generate_curation_yaml(
                     continue
 
                 source = row[0].split("|")[0]
+                source_key = source.upper()
                 target_protein = row[1]
                 target_label = None
+
+                # フィルターを通過したBLASTpヒットが存在する
+                blast_hit_sources.add(source_key)
 
                 if use_entrez_gene:
                     if target_protein not in protein_gene_cache:
@@ -143,14 +170,15 @@ def generate_curation_yaml(
                     override["target_label"] = target_label
 
                 overrides.append(override)
-                found_sources.add(source)
 
-    # 2. BLASTでも見つからなかった遺伝子を unmapped に分類
+    # 2. BLASTpを実際に実行し、フィルター通過ヒットがなかった遺伝子だけを分類
     for gene in unmapped_list:
-        if gene not in found_sources:
+        gene_key = gene.upper()
+        if gene_key in queried_sources and gene_key not in blast_hit_sources:
             unmapped.append({
-                'source': gene,
-                'note': 'BLASTで明確なオーソログ無し'
+                "source": gene,
+                "reason": "blast_no_hit",
+                "note": "BLASTpで明確なオーソログ無し",
             })
 
     # 3. YAMLデータの構築
