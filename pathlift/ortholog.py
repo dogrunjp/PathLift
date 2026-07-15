@@ -77,10 +77,10 @@ def load_idmap(path: str | None) -> dict[str, str]:
     return idmap
 
 
-def build_curation(curation: dict | None) -> tuple[dict, set]:
-    """curation(辞書) -> (override_index, unmapped_set)。源キーは大文字で正規化。"""
+def build_curation(curation: dict | None) -> tuple[dict, dict]:
+    """curation(辞書) -> (override_index, unmapped_index)。源キーは大文字で正規化。"""
     override_index: dict[str, list] = defaultdict(list)
-    unmapped: set[str] = set()
+    unmapped_index: dict[str, dict] = {}
     if curation:
         for ov in curation.get("overrides") or []:
             src = (ov.get("source") or "").strip()
@@ -90,8 +90,11 @@ def build_curation(curation: dict | None) -> tuple[dict, set]:
         for um in curation.get("unmapped") or []:
             src = (um.get("source") or "").strip()
             if src:
-                unmapped.add(src.upper())
-    return dict(override_index), unmapped
+                unmapped_index[src.upper()] = {
+                    "reason": um.get("reason"),
+                    "note": um.get("note"),
+                }
+    return dict(override_index), unmapped_index
 
 
 def _enabled_routes(routes: dict | None) -> set:
@@ -111,14 +114,14 @@ def _enabled_routes(routes: dict | None) -> set:
 
 class OrthologResolver:
     def __init__(self, *, symbol_index, pid_index, gid2sym, txgene: TranscriptGeneMap,
-                 override_index=None, unmapped_set=None,
+                 override_index=None, unmapped_index=None,
                  enabled_routes=(Route.SYMBOL,), idmap=None, policy: str = "augment"):
         self.symbol_index = symbol_index
         self.pid_index = pid_index
         self.gid2sym = gid2sym
         self.txgene = txgene
         self.override_index = override_index or {}
-        self.unmapped_set = unmapped_set or set()
+        self.unmapped_index = unmapped_index or {}
         self.enabled_routes = set(enabled_routes)
         self.idmap = idmap or {}
         self.policy = policy
@@ -130,10 +133,10 @@ class OrthologResolver:
         symbol_index, pid_index = load_funflow_index(funflow_path, columns)
         gid2sym = load_gene_info(gene_info_path, gene_info_taxid)
         txgene = TranscriptGeneMap.from_gtf(gtf_path)
-        override_index, unmapped_set = build_curation(curation)
+        override_index, unmapped_index = build_curation(curation)
         return cls(
             symbol_index=symbol_index, pid_index=pid_index, gid2sym=gid2sym,
-            txgene=txgene, override_index=override_index, unmapped_set=unmapped_set,
+            txgene=txgene, override_index=override_index, unmapped_index=unmapped_index,
             enabled_routes=_enabled_routes(routes), idmap=load_idmap(idmap_path),
             policy=policy,
         )
@@ -156,8 +159,14 @@ class OrthologResolver:
         keys = {k.upper() for k in (sym, node.xref_id, node.label) if k}
 
         # curation.unmapped は最優先で短絡
-        if keys & self.unmapped_set:
-            res.mark_unmapped("curation: unmapped")
+        for key in sorted(keys):
+            unmapped_metadata = self.unmapped_index.get(key)
+            if unmapped_metadata is None:
+                continue
+            res.mark_unmapped(
+                note=unmapped_metadata.get("note") or "curation: unmapped",
+                reason=unmapped_metadata.get("reason"),
+            )
             return res
 
         # ルートごとに protein を集め、route を記録(和集合)

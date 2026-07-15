@@ -112,8 +112,17 @@ class GpmlDocument:
             self.root.insert(pos + i, clone)
         return len(cands)
 
-    def mark_unmapped(self, el, note: str) -> None:
+    def mark_unmapped(
+        self,
+        el,
+        note: str,
+        fill_color: str | None = None,
+    ) -> None:
         self._add_comment(el, f"unmapped: {note}")
+        if fill_color:
+            graphics = el.find(self._q("Graphics"))
+            if graphics is not None:
+                graphics.set("FillColor", fill_color)
 
     def write(self, path: str) -> None:
         self.tree.write(path, xml_declaration=True, encoding="UTF-8")

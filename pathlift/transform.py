@@ -8,6 +8,9 @@ from __future__ import annotations
 from .gpml import GpmlDocument
 
 
+BLAST_NO_HIT_FILL_COLOR = "ffcccc"
+
+
 class PathwayTransformer:
     def __init__(self, resolver, out_namespace: str, nudge=(24, 16)):
         self.resolver = resolver
@@ -34,7 +37,14 @@ class PathwayTransformer:
                 stats["nodes_added"] += res.gene_count - 1
             else:
                 sym = res.symbol or node.label or "?"
-                doc.mark_unmapped(el, f"{sym} ({res.note or 'unmapped'})")
+                fill_color = None
+                if res.unmapped_reason == "blast_no_hit":
+                    fill_color = BLAST_NO_HIT_FILL_COLOR
+                doc.mark_unmapped(
+                    el,
+                    f"{sym} ({res.note or 'unmapped'})",
+                    fill_color=fill_color,
+                )
                 stats["unmapped"] += 1
                 stats["unmapped_list"].append(sym)
         stats["txgene_unrecognized"] = len(self.resolver.txgene.unrecognized)
