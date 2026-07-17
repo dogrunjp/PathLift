@@ -94,14 +94,14 @@ class GpmlDocument:
     def _apply(self, el, cand, out_namespace: str) -> None:
         if cand.label:
             el.set("TextLabel", cand.label)
-        self._set_xref(el, out_namespace, cand.gene_id)
+        self._set_xref(el, cand.database or out_namespace, cand.gene_id)
         routes = ",".join(sorted(r.value for r in cand.routes))
         tx = ",".join(cand.transcript_ids())
         self._add_comment(el, f"candidate gene={cand.gene_id}; transcripts={tx}; routes={routes}")
 
     def expand(self, el, result: ResolveResult, out_namespace: str, nudge=(24, 16)) -> int:
         """候補gene数ぶんにノードを展開。先頭は元ノード(GraphId/位置維持)、残りはクローン+ずらし。"""
-        cands = sorted(result.candidates, key=lambda c: c.gene_id)
+        cands = sorted(result.candidates, key=lambda c: (c.gene_id, c.database or ""))
         clones = [copy.deepcopy(el) for _ in cands[1:]]   # コメント付与前(pristine)に複製
         self._apply(el, cands[0], out_namespace)
         pos = list(self.root).index(el)

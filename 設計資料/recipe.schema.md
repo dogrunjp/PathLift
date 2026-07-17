@@ -54,9 +54,14 @@ recipeは、**人手・アドホックな発見と判定の「結果」を固定
 | `gene_info.taxid` | int | — | `9606` | 源(ヒト)の tax_id |
 | `routes.symbol` | bool | — | `true` | 主ルート（記号、再現率重視） |
 | `routes.pid` | bool | — | `false` | 精密ルート。`true`なら`idmap`必須 |
-| `routes.compute` | bool | — | `false` | blastp計算。PoCは保留（curationで代替） |
+| `routes.compute` | bool | — | `false` | blastp計算フォールバック。**実装済**（2026-07、`pathlift/auto_curation.py`ほか）。詳細は`pathway-liftover-spec.md` §8 |
 | `idmap` | path | 条件付 | — | `source_id<TAB>ENSP`。`routes.pid=true`で必須 |
-| `compute_fallback.blastp` | object | 任意 | — | `routes.compute=true`時のみ。`{evalue, identity_min, coverage_min}` |
+| `target.reference_fasta` | path | 任意 | — | target種のローカル参照FASTA（タンパク質）。指定時は`compute`ルートがローカルblastpを使う。無指定ならNCBI nrへのremote blastp（`target.taxid`で絞込） |
+| `compute_fallback.blastp` | object | 任意 | — | `routes.compute=true`時のみ。`{evalue}`。フィルタ閾値（identity/coverage）はrecipe化しない（下記） |
+
+> **フィルタ閾値はRBH_plus由来の固定ロジック（2026-07-11決定）**：blastヒットの採否判定（`length>=50` かつ `length/qlen>=0.6` かつ `length/slen>=0.6` かつ `qlen/slen>=0.7` かつ `slen/qlen>=0.7`）は、大石さんが別ツール RBH_plus で運用してきたフィルターをそのまま踏襲したもの。RBH_plusとPathLiftで同一ロジックを保つことを優先し、**recipeごとに調整可能なパラメータにはしない**（コード内の固定値のまま）。このため`compute_fallback.blastp`から`identity_min`/`coverage_min`は廃止し、recipeで調整できるのは`evalue`のみとする。`pident`（identity）による足切りはこのフィルターには含まれない（RBH_plus自体がpidentを見ないため）。
+
+> **既知のギャップ（2026-07-11時点）**：`compute_fallback.blastp.evalue`、および`routes.compute`フラグ自体は、現在の実装（`pathlift/cli.py`・`pathlift/blast_runner.py`）から**参照されていない**。実際は「unmappedが1件でもあれば無条件に自動キュレーション（BLASTレスキュー）が発動」し、evalueも`blast_runner.py`に`1e-5`固定でハードコードされている。`routes.compute=false`でもレスキューが走ってしまう状態で、「ランタイムはrecipeの判定のみに従う」という不変条件（本ファイル冒頭・`CLAUDE.md`）に反する。**実装側の配線修正（`routes.compute`でのon/off、`compute_fallback.blastp.evalue`の値をblast_runner.pyに渡す）が別途必要**（フィルタ閾値自体は上記の通り固定のままでよい）。
 
 - 解決器は**候補集合**を返す: `[{gene, transcripts[], routes}]` ＋ status。各候補はどのルートで当たったか(provenance)を持つ。
 - 記号正規化: Entrezノードは`gene_info`の`GeneID→公式記号`（一意キーなので衝突しない）。HGNCノードはIDがそのまま公式記号。**synonym経由の正規化はしない**（別遺伝子と衝突するため）。
@@ -105,7 +110,7 @@ unmapped:         # 解決不能として確定保持(解決を試みない)
 2. `provided_table.columns.*` が実際の表ヘッダに存在するか（`target_id`・`source_symbol`は必須、`source_pid`は指定時）。
 3. `output_id_namespace` が空でないか。
 4. `policy` / `format` のenum値。
-5. `routes.pid=true` なら `idmap` が指定・存在するか。`routes.compute=true` なら `compute_fallback.blastp` が妥当か（evalue>0、identity/coverageは0–100）。
+5. `routes.pid=true` なら `idmap` が指定・存在するか。`routes.compute=true` なら `compute_fallback.blastp.evalue` が妥当か（evalue>0）。フィルタ閾値（identity/coverage）はrecipeでは扱わない（RBH_plus由来の固定ロジック、上記参照）。
 6. 少なくとも1ルートが有効か。
 7. `schema_version` の互換性。
 
@@ -157,7 +162,7 @@ ortholog_resolver:
   routes:
     symbol: true        # 主・再現率重視
     pid: false          # 精密。要 idmap(source_id->ENSP)。PoCは保留
-    compute: false      # blastp。PoCは保留(curationで代替)
+    compute: false      # blastp自動キュレーション。実装済(§本ファイル上部・spec §8)。既知のギャップにより現状は値に関わらず発動する
   idmap: null
 
 expression:                            # Phase2。最初の通しでは省略可

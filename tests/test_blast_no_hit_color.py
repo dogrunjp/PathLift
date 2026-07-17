@@ -6,9 +6,11 @@ from pathlib import Path
 import yaml
 
 from pathlift.auto_curation import generate_curation_yaml
-from pathlift.models import GeneProductNode
+from pathlift.gpml import GpmlDocument
+from pathlift.models import GeneProductNode, ResolveResult, Route
 from pathlift.ortholog import OrthologResolver
 from pathlift.transform import BLAST_NO_HIT_FILL_COLOR, PathwayTransformer
+from unittest.mock import patch
 
 
 GPML_NS = "http://pathvisio.org/GPML/2013a"
@@ -57,6 +59,103 @@ class BlastNoHitColorTests(unittest.TestCase):
                 }],
             )
             self.assertEqual(data["overrides"][0]["source"], "WITH_HIT")
+            self.assertNotIn("target_database", data["overrides"][0])
+
+    def test_remote_blast_override_uses_entrez_gene_database(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            query_fasta = tmp_path / "queries.fa"
+            filtered_tsv = tmp_path / "filtered.tsv"
+            output_yaml = tmp_path / "auto_curation.yaml"
+
+            query_fasta.write_text(">REMOTE_HIT\nAAAA\n", encoding="utf-8")
+            filtered_tsv.write_text(
+                "REMOTE_HIT\tref|XP_123.1|\n",
+                encoding="utf-8",
+            )
+
+            with (
+                patch(
+                    "pathlift.auto_curation.ncbi_protein_to_gene_id",
+                    return_value="123456",
+                ),
+                patch(
+                    "pathlift.auto_curation.ncbi_gene_id_to_symbol",
+                    return_value="TargetGene",
+                ),
+            ):
+                generate_curation_yaml(
+                    filtered_tsv,
+                    ["REMOTE_HIT"],
+                    DummyTranscriptGeneMap(),
+                    output_yaml,
+                    use_entrez_gene=True,
+                    query_fasta=query_fasta,
+                )
+
+            data = yaml.safe_load(output_yaml.read_text(encoding="utf-8"))
+            override = data["overrides"][0]
+            self.assertEqual(override["target"], "123456")
+            self.assertEqual(override["target_database"], "Entrez Gene")
+            self.assertEqual(override["target_label"], "TargetGene")
+
+    def test_gpml_prefers_candidate_database_over_recipe_default(self):
+        gpml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Pathway xmlns="{GPML_NS}">
+  <DataNode TextLabel="TABLE" GraphId="a0001" Type="GeneProduct">
+    <Graphics CenterX="10" CenterY="10" Width="80" Height="20" />
+    <Xref Database="Entrez Gene" ID="1" />
+  </DataNode>
+  <DataNode TextLabel="REMOTE" GraphId="a0002" Type="GeneProduct">
+    <Graphics CenterX="20" CenterY="20" Width="80" Height="20" />
+    <Xref Database="Entrez Gene" ID="2" />
+  </DataNode>
+</Pathway>
+"""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.gpml"
+            output = Path(tmp) / "output.gpml"
+            source.write_text(gpml, encoding="utf-8")
+            doc = GpmlDocument.read(source)
+
+            for el, node in doc.gene_product_nodes():
+                result = ResolveResult(source=node)
+                if node.label == "REMOTE":
+                    result.add_candidate(
+                        "123456",
+                        routes=[Route.OVERRIDE],
+                        database="Entrez Gene",
+                    )
+                else:
+                    result.add_candidate(
+                        "assembly_gene",
+                        routes=[Route.SYMBOL],
+                    )
+                doc.expand(el, result, out_namespace="assembly")
+
+            doc.write(output)
+            root = ET.parse(output).getroot()
+            xrefs = {
+                node.get("TextLabel"): node.find(f"{{{GPML_NS}}}Xref")
+                for node in root.findall(f"{{{GPML_NS}}}DataNode")
+            }
+
+            self.assertEqual(xrefs["TABLE"].get("Database"), "assembly")
+            self.assertEqual(xrefs["TABLE"].get("ID"), "assembly_gene")
+            self.assertEqual(xrefs["REMOTE"].get("Database"), "Entrez Gene")
+            self.assertEqual(xrefs["REMOTE"].get("ID"), "123456")
+
+    def test_same_id_in_different_databases_remains_distinct(self):
+        result = ResolveResult(source=GeneProductNode(graph_id="a0001"))
+        result.add_candidate("123456", routes=[Route.SYMBOL])
+        result.add_candidate(
+            "123456",
+            routes=[Route.OVERRIDE],
+            database="Entrez Gene",
+        )
+
+        self.assertEqual(result.gene_count, 2)
 
     def test_reason_is_propagated_from_curation(self):
         resolver = OrthologResolver(

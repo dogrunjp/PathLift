@@ -202,5 +202,5 @@ PoC#1 で「変換すると約2倍に膨らむ」と観測したが、3例で展
 - `pathway-liftover-spec.md` — 正規仕様（何をするか）
 - `recipe.schema.md` — recipe / curation サイドカーのスキーマ
 - `c4_model.md` + `pathlift_c4_l3_after_implementation.svg` — コンポーネント構成
-- `conversion_flow.md` — ランタイムの変換フロー
+- `runtime_flow_and_branching.md` — ランタイムの実行時フロー・設定分岐（旧`conversion_flow.md`）
 - `開発管理/手動PoC記録.md` — バイト氏の手動 lift 記録（C-3 の一次資料）
