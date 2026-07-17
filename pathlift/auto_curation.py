@@ -166,6 +166,9 @@ def generate_curation_yaml(
                     "note": note,
                 }
 
+                if use_entrez_gene:
+                    override["target_database"] = "Entrez Gene"
+
                 if target_label:
                     override["target_label"] = target_label
 

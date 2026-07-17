@@ -56,11 +56,12 @@ class TranscriptHit:
 
 @dataclass
 class Candidate:
-    """源ノードに対する候補オーソログ(対象種の assembly gene)。"""
-    gene_id: str                                          # assembly gene (MSTRG.x / g####) = 出力XREF
+    """源ノードに対する候補オーソログ(対象種の遺伝子)。"""
+    gene_id: str                                          # 出力XREFのID
     transcripts: list[TranscriptHit] = field(default_factory=list)
     routes: set[Route] = field(default_factory=set)       # 当たったルート(複数可)
     label: str | None = None
+    database: str | None = None                           # 未指定ならrecipeの出力名前空間
 
     def transcript_ids(self) -> list[str]:
         return [t.transcript_id for t in self.transcripts]
@@ -96,19 +97,31 @@ class ResolveResult:
     def transcript_count(self) -> int:
         return sum(len(c.transcripts) for c in self.candidates)
 
-    def add_candidate(self, gene_id: str, transcripts=(), routes=(), label=None) -> Candidate:
-        """gene_id が既出なら統合(transcript和集合・route和集合)、無ければ新規。
+    def add_candidate(
+        self,
+        gene_id: str,
+        transcripts=(),
+        routes=(),
+        label=None,
+        database=None,
+    ) -> Candidate:
+        """(database, gene_id) が既出なら統合、無ければ新規。
         いずれも status を MATCHED にする。routes は Route か文字列を受ける。"""
         rs = {r if isinstance(r, Route) else Route(r) for r in routes}
         for c in self.candidates:
-            if c.gene_id == gene_id:
+            if c.gene_id == gene_id and c.database == database:
                 c.add_transcripts(transcripts)
                 c.routes |= rs
                 if label and not c.label:
                     c.label = label
                 self.status = ResolveStatus.MATCHED
                 return c
-        c = Candidate(gene_id=gene_id, routes=rs, label=label)
+        c = Candidate(
+            gene_id=gene_id,
+            routes=rs,
+            label=label,
+            database=database,
+        )
         c.add_transcripts(transcripts)
         self.candidates.append(c)
         self.status = ResolveStatus.MATCHED
