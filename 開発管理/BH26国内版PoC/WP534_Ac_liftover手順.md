@@ -71,6 +71,30 @@
 | BLAST | `/Users/oec/miniconda3/envs/pathlift-blast/bin/blastp` | `blastp: 2.16.0+` |
 | PathVisio | `/Applications/pathvisio-3.3.0/pathvisio.jar` | `sh /Applications/pathvisio-3.3.0/pathvisio.sh ...` で起動 |
 
+### Codex 実行環境メモ
+
+今回の作業は Codex coding agent 上で実施した。セッション上の説明では「GPT-5 ベースの Codex」とされている。
+
+公式 OpenAI documentation で確認した `GPT-5-Codex` の主な仕様:
+
+| 項目 | 内容 |
+|---|---|
+| 位置づけ | Codex または Codex-like 環境の agentic coding tasks 向けに最適化された GPT-5 |
+| API | Responses API のみ |
+| コンテキスト長 | 400,000 tokens |
+| 最大出力 | 128,000 tokens |
+| Knowledge cutoff | 2024-09-30 |
+| 入出力 modality | text 入出力、image 入力のみ。audio/video は非対応 |
+| 機能 | streaming、function calling、structured outputs、reasoning tokens をサポート |
+| 注意 | `gpt-5-codex` の underlying model snapshot は定期的に更新される |
+
+参照:
+
+- `https://developers.openai.com/api/docs/models/gpt-5-codex`
+- `https://platform.openai.com/docs/models`
+
+注: 上記は公式ドキュメント上の `GPT-5-Codex` モデル情報であり、今回のチャットセッションの実際の提供条件・利用制限・内部設定を完全に記述するものではない。
+
 ## 目的
 
 WikiPathways の `WP534`（Glycolysis and gluconeogenesis / Homo sapiens）を source GPML とし、A. cerana の FunFlow リソースを使って PathLift の liftover 動作を確認する。
