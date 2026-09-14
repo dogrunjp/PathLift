@@ -57,8 +57,7 @@ pathlift run --help
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
-
-- config.yaml (設定ファイルの名称は適宜変更してください)
+- configs/WP550_Ac.yaml (設定ファイルの名称は適宜変更してください)
 
 ```yaml
 pathway:
@@ -78,7 +77,6 @@ ortholog_resolver:
   routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
 ```
 
-
 - 実行
 
 リポジトリ直下から：
@@ -86,8 +84,6 @@ ortholog_resolver:
 ```bash
 pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
 ```
-
-
 
 ### 例2）　WP5277のB.moriのリフトオーバー
 | 入力 | 取得元 | 置き場所（例） | 取得元 |
@@ -97,7 +93,7 @@ pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
-- config.yaml (設定ファイルの名称は適宜変更してください)
+- configs/WP5277_Bmori.yaml (設定ファイルの名称は適宜変更してください)
 
 ```yaml
 pathway:
@@ -130,9 +126,6 @@ pathlift run configs/WP5277_Bmori.yaml -o out_WP5277_B_mori.gpml
 ```
 
 
-
-
-
 > B.mori は GTF（RefSeq `GCF_030269925.1`）が対応表の ID（KWMTBOMO）と系統が違うため **txgene では使わない**（パターン畳み）。詳細は `設計資料/PoC知見と設計判断.md` F章。
 
 ---
@@ -145,6 +138,9 @@ pathlift run configs/WP5277_Bmori.yaml -o out_WP5277_B_mori.gpml
 **recipe内に書くパス（`source_gpml`等）の基準は「recipe ファイルのあるディレクトリ」**。この配置（`configs/` と `resource/` が同階層）では `../resource/...` と書く。（`-o`の出力先やコマンドをどこで打つかは別の話 → 8章）
 
 各項目の詳しい意味は `設計資料/recipe.schema.md` が正本。ここでは最小構成にコメントだけ添える：
+
+
+- WP5277_Bmori.yaml
 
 ```yaml
 pathway:
