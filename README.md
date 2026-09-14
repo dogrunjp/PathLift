@@ -18,7 +18,7 @@ git clone https://github.com/dogrunjp/PathLift.git
 cd PathLift
 ````
 
-Python 3.10+ と PyYAML だけ。重い依存（lxml/pandas 等）は無い。
+依存ライブラリのPython 3.10+ と PyYAMLをインストールする。
 
 ```bash
 conda create -n pathlift python=3.12 -y
