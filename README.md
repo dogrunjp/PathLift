@@ -95,7 +95,7 @@ ortholog_resolver:
 リポジトリ直下から：
 
 ```bash
-pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.gpml
+gpmlpathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.
 ```
 
 出力 stats の読み方：
