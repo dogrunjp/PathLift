@@ -1,0 +1,37 @@
+# liftover recipe: WP534 (Homo sapiens) -> Apis cerana
+# compute ルート(BLASTレスキュー)確認用。
+schema_version: 2
+
+pathway:
+  source_gpml: ../resource/WP534.gpml
+
+target:
+  taxid: 7461
+  output_id_namespace: assembly
+  transcript_gene_gtf: ../resource/A_cerana/figshare_27175734/ref_transcript_Ac.gtf
+  reference_fasta: ../resource/A_cerana/figshare_27175734/ref_transcript_Ac_pep.fa
+
+ortholog_resolver:
+  policy: augment
+  provided_table:
+    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv
+    format: tsv
+    columns:
+      target_id: ProteinID
+      source_symbol: H_sapiens-gene_symbol
+      source_pid: H_sapiens-pid
+  gene_info:
+    path: ../resource/Homo_sapiens.gene_info
+    taxid: 9606
+  routes:
+    symbol: true
+    pid: false
+    compute: true
+  compute_fallback:
+    blastp:
+      evalue: 1e-5
+
+expression:
+  tpm: ../resource/A_cerana/figshare_27175734/tpm_Ac.tsv
+
+curation_file: WP534_Ac.curation.yaml

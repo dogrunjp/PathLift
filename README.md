@@ -11,6 +11,8 @@ WikiPathways の GPML パスウェイを、オルソログ対応表を参照し�
 
 ## 1. 環境構築
 
+
+
 Python 3.10+ と PyYAML だけ。重い依存（lxml/pandas 等）は無い。
 
 ```bash
@@ -46,14 +48,13 @@ pathlift run --help
 
 **下表のリソースは自動では揃わない。** 無ければ `開発管理/手動PoC記録.md` を参照し、それでも分からなければ取得済みのメンバーに確認する。
 
-| 入力 | 取得元 | 置き場所（例） |
-|---|---|---|
-| source GPML | WikiPathways（**新 GitHub システム**。Classic は読み取り専用） | `resource/WP5277.gpml` |
-| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
+| 入力 | 取得元 | 置き場所（例） | 取得元 |
+|---|---|---|---|
+| source GPML | WikiPathways | `resource/WP550.gpml` |`https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml`|
+| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | `https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv` |
 | GTF（A.cerana） | 同上 | `resource/A_cerana/.../ref_transcript_Ac.gtf` |
-| 対応表（B.mori） | FF4I figshare 19368137（`FF4I-B_mori-protein.tsv`） | `resource/B_mori/FF4I-B_mori-protein.tsv` |
-| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |
-| TPM（任意・Phase2） | figshare 27157632 等 | `resource/.../tpm_*.tsv` |
+| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |`https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz`
+| TPM（任意・Phase2） | figshare 27157632 等 | `resource/.../tpm_*.tsv` | |
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
 > B.mori は GTF（RefSeq `GCF_030269925.1`）が対応表の ID（KWMTBOMO）と系統が違うため **txgene では使わない**（パターン畳み）。詳細は `設計資料/PoC知見と設計判断.md` F章。
@@ -194,6 +195,7 @@ grep -o 'unmapped:[^<]*' out.gpml          # MISS（記号付き）
 
 | recipe | source | target | matched/GeneProduct | 展開率 |
 |---|---|---|---|---|
+| WP550_ac.yaml | WP550 | | |
 | WP5609_Ac.yaml | WP5609（代謝） | A.cerana | 31/38 (82%) | 2.3 |
 | WP5277_Bmori.yaml | WP5277（ステロイド代謝） | B.mori | 7/13 (54%) | 1.7 |
 | WP5601_Bmori.yaml | WP5601（シグナル） | B.mori | 23/33 (70%) | 3.0 |
