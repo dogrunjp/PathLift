@@ -48,12 +48,12 @@ pathlift run --help
 
 **下表のリソースは自動では揃わない。** 無ければ `開発管理/手動PoC記録.md` を参照し、それでも分からなければ取得済みのメンバーに確認する。
 
-### 例１）　WP550のA.ceranaのリフトオーバーの
+### 例１）　WP550のA.ceranaのリフトオーバー
 
 | 入力 | 取得元 | 置き場所（例） | 取得元 |
 |---|---|---|---|
 | source GPML | WikiPathways | `resource/WP550.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml"> Down load</a>|
-| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | <a href="https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv">Down load</a>|
+| 対応表（A.cerana） | fanflow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | <a href="https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv">Down load</a>|
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
@@ -93,7 +93,7 @@ pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
 | 入力 | 取得元 | 置き場所（例） | 取得元 |
 |---|---|---|---|
 | source GPML | WikiPathways | `resource/WP5277.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP5277/WP5277.gpml"> Down load</a>|
-| 対応表（B.mori） | FunFlow figshare 19368137| `rresource/B_mori/FF4I-B_mori-protein.tsv ` | <a href="https://figshare.com/ndownloader/files/34398281">Down load</a>|
+| 対応表（B.mori） | fanflow figshare 19368137| `rresource/B_mori/FF4I-B_mori-protein.tsv ` | <a href="https://figshare.com/ndownloader/files/34398281">Down load</a>|
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
