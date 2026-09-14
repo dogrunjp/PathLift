@@ -49,7 +49,7 @@ pathlift run --help
 | 入力 | 取得元 | 置き場所（例） |
 |---|---|---|
 | source GPML | WikiPathways（**新 GitHub システム**。Classic は読み取り専用） | `resource/WP5277.gpml` |
-| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
+| 対応表（A.cerana） | fanflow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
 | GTF（A.cerana） | 同上 | `resource/A_cerana/.../ref_transcript_Ac.gtf` |
 | 対応表（B.mori） | FF4I figshare 19368137（`FF4I-B_mori-protein.tsv`） | `resource/B_mori/FF4I-B_mori-protein.tsv` |
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |
