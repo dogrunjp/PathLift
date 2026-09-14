@@ -11,7 +11,12 @@ WikiPathways の GPML パスウェイを、オルソログ対応表を参照し�
 
 ## 1. 環境構築
 
+まずPathLift（本リポジトリ）をローカルにcloneする
 
+```
+git clone https://github.com/dogrunjp/PathLift.git
+cd PathLift
+````
 
 Python 3.10+ と PyYAML だけ。重い依存（lxml/pandas 等）は無い。
 
