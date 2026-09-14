@@ -48,10 +48,17 @@ pathlift run --help
 
 **下表のリソースは自動では揃わない。** 無ければ `開発管理/手動PoC記録.md` を参照し、それでも分からなければ取得済みのメンバーに確認する。
 
+<<<<<<< HEAD
 | 入力 | 取得元 | 置き場所（例） | 取得元 |
 |---|---|---|---|
 | source GPML | WikiPathways | `resource/WP550.gpml` |`https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml`|
 | 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | `https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv` |
+=======
+| 入力 | 取得元 | 置き場所（例） |
+|---|---|---|
+| source GPML | WikiPathways（**新 GitHub システム**。Classic は読み取り専用） | `resource/WP5277.gpml` |
+| 対応表（A.cerana） | fanflow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
+>>>>>>> d5284f246d0b4fd820ee7fa30942c9c76faccbf6
 | GTF（A.cerana） | 同上 | `resource/A_cerana/.../ref_transcript_Ac.gtf` |
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |`https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz`
 | TPM（任意・Phase2） | figshare 27157632 等 | `resource/.../tpm_*.tsv` | |
