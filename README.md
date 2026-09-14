@@ -48,21 +48,57 @@ pathlift run --help
 
 **下表のリソースは自動では揃わない。** 無ければ `開発管理/手動PoC記録.md` を参照し、それでも分からなければ取得済みのメンバーに確認する。
 
-<<<<<<< HEAD
+### 例１）　WP550のA.ceranaのリフトオーバーの
+
 | 入力 | 取得元 | 置き場所（例） | 取得元 |
 |---|---|---|---|
-| source GPML | WikiPathways | `resource/WP550.gpml` |`https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml`|
-| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | `https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv` |
-=======
-| 入力 | 取得元 | 置き場所（例） |
-|---|---|---|
-| source GPML | WikiPathways（**新 GitHub システム**。Classic は読み取り専用） | `resource/WP5277.gpml` |
-| 対応表（A.cerana） | fanflow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
->>>>>>> d5284f246d0b4fd820ee7fa30942c9c76faccbf6
+| source GPML | WikiPathways | `resource/WP550.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml"> Down load</a>|
+| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | <a href="https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv">Down load</a>|
 | GTF（A.cerana） | 同上 | `resource/A_cerana/.../ref_transcript_Ac.gtf` |
-| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |`https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz`
-| TPM（任意・Phase2） | figshare 27157632 等 | `resource/.../tpm_*.tsv` | |
+| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
+
+
+- config.yaml (設定ファイルの名称は適宜変更してください)
+
+```yaml
+pathway:
+  source_gpml: ../resource/WP550.gpml   # 変換元(ヒト等)のGPML本体。2章の表から取得したもの
+
+target:
+  transcript_gene_gtf: ../resource/A_cerana/...   # target種のtranscript→gene対応（任意です・現状は必要ありません）
+
+ortholog_resolver:
+  provided_table:
+    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv   # 変換元↔target種の対応表
+    columns:
+      target_id:     B_mori-pid          # 対応表内の「target種ID」列名
+      source_symbol: H_sapiens-gsymbol    # 対応表内の「変換元の遺伝子記号」列名（主ルート）
+      source_pid:    H_sapiens-ENSPID     # 対応表内の「変換元のprotein ID」列名（精密ルート用・任意）
+  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # 変換元のGeneID→公式記号の変換表
+  routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
+```
+
+
+- 実行
+
+リポジトリ直下から：
+
+```bash
+pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_date.gpml
+```
+
+
+
+### 例2）　WP5277のB.moriのリフトオーバー
+| 入力 | 取得元 | 置き場所（例） | 取得元 |
+|---|---|---|---|
+| source GPML | WikiPathways | `resource/WP5277.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP5277/WP5277.gpml"> Down load</a>|
+| 対応表（A.cerana） | FunFlow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | <a href="https://figshare.com/articles/dataset/Functional_annotation_for_Bombyx_mori_by_Fanflow4Insects/19368137">Down load</a>|
+| GTF（A.cerana） | 同上 | `resource/A_cerana/.../ref_transcript_Ac.gtf` |
+| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
+| reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
+
 
 > B.mori は GTF（RefSeq `GCF_030269925.1`）が対応表の ID（KWMTBOMO）と系統が違うため **txgene では使わない**（パターン畳み）。詳細は `設計資料/PoC知見と設計判断.md` F章。
 
@@ -102,7 +138,7 @@ ortholog_resolver:
 リポジトリ直下から：
 
 ```bash
-gpmlpathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.
+pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.gpml
 ```
 
 出力 stats の読み方：
