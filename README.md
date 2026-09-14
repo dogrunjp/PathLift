@@ -84,7 +84,7 @@ ortholog_resolver:
 リポジトリ直下から：
 
 ```bash
-pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_date.gpml
+pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
 ```
 
 
@@ -96,6 +96,41 @@ pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_date.gpml
 | 対応表（B.mori） | FunFlow figshare 19368137| `rresource/B_mori/FF4I-B_mori-protein.tsv ` | <a href="https://figshare.com/ndownloader/files/34398281">Down load</a>|
 | gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
 | reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
+
+- config.yaml (設定ファイルの名称は適宜変更してください)
+
+```yaml
+pathway:
+  source_gpml: ../resource/WP550.gpml   # 変換元(ヒト等)のGPML本体。2章の表から取得したもの
+
+target:
+  transcript_gene_gtf: ../resource/A_cerana/...   # target種のtranscript→gene対応（任意です・現状は必要ありません）
+  output_id_namespace: assembly
+  taxid: 7091  
+
+ortholog_resolver:
+  policy: augment  
+  provided_table:
+    path: ../resource/B_mori/FF4I-B_mori-protein.tsv   # 変換元↔target種の対応表
+    columns:
+      target_id:     B_mori-pid          # 対応表内の「target種ID」列名
+      source_symbol: H_sapiens-gsymbol    # 対応表内の「変換元の遺伝子記号」列名（主ルート）
+      source_pid:    H_sapiens-ENSPID    # 対応表内の「変換元のprotein ID」列名（精密ルート用・任意）
+  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # 変換元のGeneID→公式記号の変換表
+  routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
+```
+
+
+- 実行
+
+リポジトリ直下から：
+
+```bash
+pathlift run configs/WP5277_Bmori.yaml -o out_WP5277_B_mori.gpml
+```
+
+
+
 
 
 > B.mori は GTF（RefSeq `GCF_030269925.1`）が対応表の ID（KWMTBOMO）と系統が違うため **txgene では使わない**（パターン畳み）。詳細は `設計資料/PoC知見と設計判断.md` F章。
