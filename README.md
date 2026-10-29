@@ -1,194 +1,175 @@
 # PathLift
 
-WikiPathways の GPML パスウェイを、オルソログ対応表を参照して**別種の遺伝子IDに付け替える（lift する）** CLI ツール。
-変換元（ヒト等）の GeneProduct ノードを、target 種の候補遺伝子ノードに置換・展開した GPML を出力する。
+**English** | [日本語](README.ja.md)
 
-- 設計と背景：`設計資料/`（まず `設計資料/PoC知見と設計判断.md`）
-- AI エージェント向け規範：`CLAUDE.md`
-- 実行テストの記録：`開発管理/テストログ_*.md`
+PathLift is a CLI tool that **lifts** WikiPathways GPML pathways onto another species by re-assigning gene IDs through an ortholog table.
+Each GeneProduct node of the source species (e.g., human) is replaced with, or expanded into, candidate gene nodes of the target species, and the result is written out as GPML.
+
+```
+source GPML (human) ─┐
+ortholog table ──────┼─▶  pathlift run <recipe>.yaml  ─▶  lifted GPML (target species)
+gene_info (human) ───┘
+```
+
+## Quick start
+
+```bash
+git clone https://github.com/dogrunjp/PathLift.git
+cd PathLift
+conda create -n pathlift python=3.12 -y
+conda activate pathlift
+pip install -e .
+
+# After placing the input files under resource/ (see "Examples")
+pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
+```
 
 ---
 
-## 1. 環境構築
+## Installation
 
-まずPathLift（本リポジトリ）をローカルにcloneする
-
-```
-git clone https://github.com/dogrunjp/PathLift.git
-cd PathLift
-````
-
-依存ライブラリのPython 3.10+ と PyYAMLをインストールする。
+Requirements: Python 3.10+ and PyYAML. `pip install -e .` (run in the repository root) installs PyYAML and the `pathlift` command.
 
 ```bash
 conda create -n pathlift python=3.12 -y
 conda activate pathlift
-pip install -e .          # pathlift コマンドが入る（PyYAML も自動で入る）
+pip install -e .
+pathlift run --help   # verify
 ```
 
-`pip install -e .` の代わりに依存だけ入れて `python -m pathlift.cli run …` でも動く。
+Alternatively, install only the dependencies and run `python -m pathlift.cli run …`.
 
-確認：
-```bash
-pathlift run --help
-```
+`blastp` is needed **only** if you enable the optional compute route (see [compute route](#compute-route-blast-rescue)). With the default `routes.compute: false`, the steps above are all you need.
 
-> **`pip install -e .` は何をしている？（Python に不慣れな人向け）**
->
-> - **必ずリポジトリのルート（`PathLift/`）で実行する。** `.` はカレントディレクトリの意味で、pip はそこの `pyproject.toml` を読む。別の場所で叩くと `pyproject.toml` が見つからず失敗する。
-> - リポジトリ全体を漁るのではなく、`pyproject.toml` の `packages = ["pathlift"]` で**指定した `pathlift/` だけ**をパッケージとして登録する。`設計資料/` や `configs/` の中身は対象外。
-> - 登録されると2つ起きる：(1) どこからでも `import pathlift` が通る、(2) `pathlift` という**コマンドが PATH に作られる**（`[project.scripts]` の指定による）。だから以後 `pathlift run …` と打てる。
-> - **`-e`（editable）** は、コードをコピーせず今の `pathlift/` を参照したままインストールする指定。`pathlift/*.py` を編集したら再インストール不要で次の実行に反映される。
->
-> うまくいかないとき：`pathlift: command not found` なら、その conda 環境を `activate` し忘れか、ルート以外で `install` した可能性。`pip install -e .` を `PathLift/` で叩き直す。
+<details>
+<summary>What does <code>pip install -e .</code> do? (for those new to Python)</summary>
 
-**`compute` ルート（BLASTレスキュー、5章）を使うなら追加で `blastp` が必要。** 使わない（`routes.compute: false`、既定）なら不要なので、まずは1章だけで動かせる。
+- **Always run it in the repository root (`PathLift/`).** `.` means the current directory; pip reads `pyproject.toml` from there. Run elsewhere, it cannot find `pyproject.toml` and fails.
+- It does not scan the whole repository. Only `pathlift/`, as specified by `packages = ["pathlift"]` in `pyproject.toml`, is registered as a package. `設計資料/` and `configs/` are not included.
+- Two things happen once it is registered: (1) `import pathlift` works from anywhere, and (2) a `pathlift` **command is placed on your PATH** (via `[project.scripts]`). That is why you can type `pathlift run …`.
+- **`-e` (editable)** installs by referencing the current `pathlift/` directory instead of copying it. Edits to `pathlift/*.py` take effect on the next run without reinstalling.
+
+If `pathlift: command not found` appears, you probably forgot to `activate` the conda environment, or ran the install outside the repository root. Re-run `pip install -e .` inside `PathLift/`.
+</details>
 
 ---
 
-## 2. リソースの取得
+## Examples
 
-大容量入力は `resource/` 配下に置く（`.gitignore` 済み・リポジトリには含めない）。
-**取得元（DOI/URL）を `開発管理/` に記録**しておくと、種を増やすとき楽。
+Large input files go under `resource/` (git-ignored; not included in the repository).
+**They are not downloaded automatically.** If something is missing, see `開発管理/手動PoC記録.md` (manual PoC notes, in Japanese) or ask a team member who already has it.
+Recording each file's source (DOI/URL) under `開発管理/` makes adding new species easier.
 
-**下表のリソースは自動では揃わない。** 無ければ `開発管理/手動PoC記録.md` を参照し、それでも分からなければ取得済みのメンバーに確認する。
+### Example 1: WP550 → *Apis cerana*
 
-### 例１）　WP550のA.ceranaのリフトオーバー
+| Input | Source | Location (example) |
+|---|---|---|
+| Source GPML | [WikiPathways WP550](https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml) | `resource/WP550.gpml` |
+| Ortholog table (*A. cerana*) | [fanflow, figshare 27175734](https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv) | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` |
+| gene_info (human) | [NCBI `Homo_sapiens.gene_info.gz`](https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz): the **human-only** file; decompress with `gunzip` | `resource/Homo_sapiens.gene_info` |
+| Reference FASTA (optional, compute only) | All protein sequences of the target species (may be omitted; see [compute route](#compute-route-blast-rescue)) | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
 
-| 入力 | 取得元 | 置き場所（例） | 取得元 |
-|---|---|---|---|
-| source GPML | WikiPathways | `resource/WP550.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP550/WP550.gpml"> Down load</a>|
-| 対応表（A.cerana） | fanflow figshare 27175734 | `resource/A_cerana/.../fuctional_annotation_transcript_Ac.tsv` | <a href="https://figshare.com/articles/dataset/Apis_cerana_japonica_transcript_data_transcript_sequence_data_predicted_amino_acid_sequence_data_functional_annotation_data_/27175734/fuctional_annotation_transcript_Ac.tsv">Down load</a>|
-| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
-| reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
-
-- configs/WP550_Ac.yaml (設定ファイルの名称は適宜変更してください)
+Recipe `configs/WP550_Ac.yaml` (rename as you like):
 
 ```yaml
 pathway:
-  source_gpml: ../resource/WP550.gpml   # 変換元(ヒト等)のGPML本体。2章の表から取得したもの
+  source_gpml: ../resource/WP550.gpml   # source (e.g., human) GPML
 
-target:
-  transcript_gene_gtf: ../resource/A_cerana/...   # target種のtranscript→gene対応（任意です・現状は必要ありません）
+# target:
+#   transcript_gene_gtf: ../resource/A_cerana/...   # transcript→gene mapping of the target (optional; not needed at present)
 
 ortholog_resolver:
   provided_table:
-    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv   # 変換元↔target種の対応表
+    path: ../resource/A_cerana/figshare_27175734/fuctional_annotation_transcript_Ac.tsv   # source↔target ortholog table
     columns:
-      target_id:     ProteinID          # 対応表内の「target種ID」列名
-      source_symbol: H_sapiens-gsymbol    # 対応表内の「変換元の遺伝子記号」列名（主ルート）
-      source_pid:    H_sapiens-pid     # 対応表内の「変換元のprotein ID」列名（精密ルート用・任意）
-  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # 変換元のGeneID→公式記号の変換表
-  routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
+      target_id:     ProteinID           # column with target-species IDs
+      source_symbol: H_sapiens-gsymbol   # column with source gene symbols (primary route)
+      source_pid:    H_sapiens-pid       # column with source protein IDs (precise route; optional)
+  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # source GeneID → official symbol
+  routes: {symbol: true, pid: false, compute: false}      # for compute: true, see "compute route"
 ```
 
-- 実行
-
-リポジトリ直下から：
+Run from the repository root:
 
 ```bash
 pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana.gpml
 ```
 
-### 例2）　WP5277のB.moriのリフトオーバー
-| 入力 | 取得元 | 置き場所（例） | 取得元 |
-|---|---|---|---|
-| source GPML | WikiPathways | `resource/WP5277.gpml` | <a href="https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP5277/WP5277.gpml"> Down load</a>|
-| 対応表（B.mori） | fanflow figshare 19368137| `rresource/B_mori/FF4I-B_mori-protein.tsv ` | <a href="https://figshare.com/ndownloader/files/34398281">Down load</a>|
-| gene_info（ヒト） | NCBI（**ヒト単独**ファイル `Homo_sapiens.gene_info`） | `resource/Homo_sapiens.gene_info` |<a href="https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz">Down load</a>
-| reference FASTA（任意・compute用） | target種の全アミノ酸配列（無ければ`false`でOK。5章） | `resource/A_cerana/.../ref_transcript_Ac_pep.fa` |
+### Example 2: WP5277 → *Bombyx mori*
 
-- configs/WP5277_Bmori.yaml (設定ファイルの名称は適宜変更してください)
+| Input | Source | Location (example) |
+|---|---|---|
+| Source GPML | [WikiPathways WP5277](https://github.com/wikipathways/wikipathways-database/blob/main/pathways/WP5277/WP5277.gpml) | `resource/WP5277.gpml` |
+| Ortholog table (*B. mori*) | [fanflow, figshare 19368137](https://figshare.com/ndownloader/files/34398281) | `resource/B_mori/FF4I-B_mori-protein.tsv` |
+| gene_info (human) | Same as Example 1 | `resource/Homo_sapiens.gene_info` |
+| Reference FASTA (optional, compute only) | All protein sequences of the target species | `resource/B_mori/...` |
+
+Recipe `configs/WP5277_Bmori.yaml`:
 
 ```yaml
 pathway:
-  source_gpml: ../resource/WP550.gpml   # 変換元(ヒト等)のGPML本体。2章の表から取得したもの
+  source_gpml: ../resource/WP5277.gpml
 
 target:
-  transcript_gene_gtf: ../resource/A_cerana/...   # target種のtranscript→gene対応（任意です・現状は必要ありません）
-  output_id_namespace: assembly
-  taxid: 7091  
+  output_id_namespace: assembly   # non-standard DataSource; see "Checking the output"
+  taxid: 7091                     # used to restrict remote BLAST
 
 ortholog_resolver:
-  policy: augment  
+  policy: augment
   provided_table:
-    path: ../resource/B_mori/FF4I-B_mori-protein.tsv   # 変換元↔target種の対応表
+    path: ../resource/B_mori/FF4I-B_mori-protein.tsv
     columns:
-      target_id:     B_mori-pid          # 対応表内の「target種ID」列名
-      source_symbol: H_sapiens-gsymbol    # 対応表内の「変換元の遺伝子記号」列名（主ルート）
-      source_pid:    H_sapiens-ENSPID    # 対応表内の「変換元のprotein ID」列名（精密ルート用・任意）
-  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # 変換元のGeneID→公式記号の変換表
-  routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
+      target_id:     B_mori-pid
+      source_symbol: H_sapiens-gsymbol
+      source_pid:    H_sapiens-ENSPID
+  gene_info: {path: ../resource/Homo_sapiens.gene_info}
+  routes: {symbol: true, pid: false, compute: false}
 ```
-
-
-- 実行
-
-リポジトリ直下から：
 
 ```bash
 pathlift run configs/WP5277_Bmori.yaml -o out_WP5277_B_mori.gpml
 ```
 
-
-> B.mori は GTF（RefSeq `GCF_030269925.1`）が対応表の ID（KWMTBOMO）と系統が違うため **txgene では使わない**（パターン畳み）。詳細は `設計資料/PoC知見と設計判断.md` F章。
-
----
-
-## 3. recipe を用意
-
-`configs/` に recipe（＋必要なら curation サイドカー）を置く。書式は `設計資料/recipe.schema.md`。
-雛形：`configs/WP5277_Bmori.yaml` ほか。
-
-**recipe内に書くパス（`source_gpml`等）の基準は「recipe ファイルのあるディレクトリ」**。この配置（`configs/` と `resource/` が同階層）では `../resource/...` と書く。（`-o`の出力先やコマンドをどこで打つかは別の話 → 8章）
-
-各項目の詳しい意味は `設計資料/recipe.schema.md` が正本。ここでは最小構成にコメントだけ添える：
-
-
-- WP5277_Bmori.yaml
-
-```yaml
-pathway:
-  source_gpml: ../resource/WP5277.gpml   # 変換元(ヒト等)のGPML本体。2章の表から取得したもの
-
-target:
-  transcript_gene_gtf: ../resource/B_mori/...   # target種のtranscript→gene対応（任意）
-
-ortholog_resolver:
-  provided_table:
-    path: ../resource/B_mori/FF4I-B_mori-protein.tsv   # 変換元↔target種の対応表
-    columns:
-      target_id:     B_mori-pid          # 対応表内の「target種ID」列名
-      source_symbol: H_sapiens-gsymbol    # 対応表内の「変換元の遺伝子記号」列名（主ルート）
-      source_pid:    H_sapiens-ENSPID     # 対応表内の「変換元のprotein ID」列名（精密ルート用・任意）
-  gene_info: {path: ../resource/Homo_sapiens.gene_info}   # 変換元のGeneID→公式記号の変換表
-  routes: {symbol: true, pid: false, compute: false}      # compute: true にする場合は5章参照
-```
+> For *B. mori*, the GTF (RefSeq `GCF_030269925.1`) uses a different ID lineage from the ortholog table (KWMTBOMO), so it is **not used for txgene** (collapsing is done by pattern instead). See Section F of `設計資料/PoC知見と設計判断.md`.
 
 ---
 
-## 4. 実行
+## Writing a recipe
 
-リポジトリ直下から：
+- Place recipes (and optional curation sidecars) in `configs/`. Existing files such as `configs/WP5277_Bmori.yaml` serve as templates.
+- The authoritative format reference is `設計資料/recipe.schema.md`.
+- **Relative paths inside a recipe** (`source_gpml`, etc.) are resolved **from the recipe's directory**. With `configs/` and `resource/` side by side, write `../resource/...`.
+- The **`-o` output path** is resolved from the **current working directory**, not the recipe.
 
-```bash
-pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.gpml
+---
+
+## Reading the output
+
+After a run, PathLift prints statistics (labels are currently in Japanese):
+
+```
+  GeneProduct: 13
+    matched  : 7
+    unmapped : 6
+  候補gene総数 : 12
+  追加ノード   : 5
+  --- 注意(未対応の可能性) ---
+  記号ラベル依存 : 13件
+  txgene未対応   : 0件
 ```
 
-出力 stats の読み方：
+| Line | Meaning |
+|---|---|
+| `GeneProduct` | Number of GeneProduct nodes in the source |
+| `matched` | Nodes resolved to target genes |
+| `unmapped` | Nodes that could not be resolved (MISS; see Section C of the design notes) |
+| `候補gene総数` (total candidates) | Total candidate genes after expansion |
+| `追加ノード` (added nodes) | Nodes added by expansion |
+| `注意(未対応の可能性)` (warnings) | **Check these if they appear** |
+| `記号ラベル依存` (symbol-label dependent) | IDs that are not Entrez/HGNC; nodes may be missed if their label is not a gene symbol (Sections E, G-1) |
+| `txgene未対応` (txgene unsupported) | IDs that could not be collapsed to gene level; may cause duplicated expansion (Sections F, G-1) |
 
-```
-  GeneProduct: 13          変換元の GeneProduct 数
-    matched  : 7           解決できた数
-    unmapped : 6           落ちた数（MISS。素性は設計資料 C章）
-  候補gene総数 : 12          展開後の候補遺伝子の総数
-  追加ノード   : 5           展開で増えたノード数
-  --- 注意(未対応の可能性) ---     ↓ 出たら要確認
-  記号ラベル依存 : 13件        非Entrez/HGNC。ラベルが記号でないと取りこぼす恐れ（E章/G-1）
-  txgene未対応   : 0件         畳めなかったID。重複展開の恐れ（F章/G-1）
-```
-
-`unmapped` が出て `routes.compute: true` なら、続けて次のようなログが出て自動レスキューが走る（詳細は5章）：
+If `unmapped` > 0 and `routes.compute: true`, an automatic rescue follows:
 
 ```
 [!] 迷子遺伝子を 7 件検出。自動レスキューを開始します...
@@ -200,7 +181,9 @@ pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.gpml
 [+] 自動レスキューによる補完が完了しました。
 ```
 
-`routes.compute: false`（既定）なら、代わりに次の1行が出て自動レスキューはスキップされる（ネットワークアクセスなし）：
+(Unmapped genes detected → fetching sequences from UniProt → remote BLAST → auto-curation file written → GPML regenerated → done.)
+
+With `routes.compute: false` (default), a single line reports that the rescue was skipped, and no network access occurs:
 
 ```
 [!] 迷子遺伝子を 7 件検出しましたが、routes.compute が無効なため自動レスキューはスキップします。
@@ -208,17 +191,17 @@ pathlift run configs/WP550_Ac.yaml -o out_WP550_A_cerana_0914.gpml
 
 ---
 
-## 5. compute ルート（BLASTレスキュー）
+## compute route (BLAST rescue)
 
-`symbol`/`pid` で解決できなかった unmapped 遺伝子を、BLASTで自動的に recall 回収する機能（`ortholog_resolver.routes.compute`）。
-既定は `false`（何もしない）。有効にすると、`unmapped` が残った回に限り以下が自動実行される。
+`ortholog_resolver.routes.compute` recovers genes left unmapped by the `symbol`/`pid` routes using BLAST. Default: `false` (does nothing).
+When enabled and some genes remain `unmapped`, PathLift automatically:
 
-1. **UniProt REST**で unmapped の遺伝子記号ごとに変換元種のアミノ酸配列を取得
-2. **blastp**を実行（`target.reference_fasta` があればローカル `-subject`、無ければ NCBI `nr` への `-remote`）
-3. ヒットをフィルタし（閾値は固定ロジック。recipeでは変更しない。`設計資料/recipe.schema.md`参照）、`<recipeのstem>_auto_curation.yaml`（overrides/unmapped）を自動生成
-4. そのcurationを適用して**2周目のliftoverを自動実行**し、同じ出力パスに上書き保存
+1. Fetches source-species protein sequences for each unmapped gene symbol via the **UniProt REST** API
+2. Runs **blastp**: locally against `-subject` if `target.reference_fasta` is set, otherwise `-remote` against NCBI `nr`
+3. Filters hits (thresholds are fixed in code and cannot be changed from the recipe; see `設計資料/recipe.schema.md`) and writes `<recipe stem>_auto_curation.yaml` (overrides/unmapped)
+4. Applies that curation, **re-runs the liftover**, and overwrites the same output path
 
-### 有効にする設定
+### Configuration
 
 ```yaml
 ortholog_resolver:
@@ -226,16 +209,19 @@ ortholog_resolver:
     compute: true
   compute_fallback:
     blastp:
-      evalue: 1e-5      # 必須。recipeで調整できるのはこれだけ
+      evalue: 1e-5      # required; the only value adjustable from the recipe
 target:
-  reference_fasta: false   # target種の全アミノ酸配列FASTA。無ければ false（remote blastpになる）
+  reference_fasta: false   # all protein sequences of the target; false → remote blastp
 ```
 
-`reference_fasta` を指定するとローカルblastp（速い・オフライン）、`false`/未指定だとNCBI `nr` への remote blastp（`target.taxid`で絞込。低速・要ネット）になる。
+| `reference_fasta` | Mode | Notes |
+|---|---|---|
+| path to FASTA | local blastp | fast, offline |
+| `false` / unset | remote blastp against NCBI `nr` | filtered by `target.taxid`; slow, needs network |
 
-### `blastp` のインストール（macOS）
+### Installing `blastp` (macOS)
 
-Homebrewを使わないなら、bioinformatics界隈で標準的な **conda（bioconda channel）** が簡単（動作確認済み：`blast 2.16.0`）。
+Without Homebrew, **conda (bioconda channel)** is the standard choice in bioinformatics (tested with `blast 2.16.0`):
 
 ```bash
 conda create -n pathlift-blast -c bioconda -c conda-forge blast
@@ -243,65 +229,74 @@ conda activate pathlift-blast
 blastp -version
 ```
 
-`pathlift`本体とは別envで構わない。`blastp`さえ`PATH`に通っていれば、`pathlift`をどのPython環境で動かしていても`subprocess`経由で見つかる。
+A separate environment from `pathlift` is fine: PathLift calls `blastp` via `subprocess`, so it only needs to be on the `PATH` of the shell running `pathlift`.
 
-### 既知の注意点
+### Known caveats
 
-- **NCBI E-utilitiesのレート制限（HTTP 429）が起きることがある**。remote blastp利用時、ヒットしたprotein accessionをEntrez Gene IDに変換する際に問い合わせる先（`ncbi_protein_to_gene_id`）が混み合うと発生する。起きても致命的ではなく、該当エントリの`target_label`（GPMLのTextLabel書き換え用）だけが空欄になる（`target`のGene ID自体は取れる）。詳細・再現例は`開発管理/テストログ_*.md`。
-- remote blastpはNCBI側のキュー待ちが発生し、数分かかることがある。
+- **NCBI E-utilities rate limits (HTTP 429) can occur.** With remote blastp, hit protein accessions are converted to Entrez Gene IDs (`ncbi_protein_to_gene_id`); when that service is busy, the request may fail. This is not fatal: only the entry's `target_label` (used to rewrite the GPML TextLabel) is left empty, while the `target` Gene ID is still obtained. Details and reproductions are in `開発管理/テストログ_*.md`.
+- Remote blastp may wait in the NCBI queue for several minutes.
 
 ---
 
-## 6. 出力の確認
+## Checking the output
 
-- **PathVisio**（3.x/4.x）で出力 GPML を開く。2013a なので開ける。
-  - `output_id_namespace: assembly` は非標準 DataSource なので「未知のデータソース」警告が出る（**想定どおり**。ID は見えるがリンク解決はされない）。
-- 展開と provenance、MISS を grep で確認：
+- Open the output GPML in **PathVisio** (3.x/4.x). It is GPML 2013a, so it opens.
+  - `output_id_namespace: assembly` is a non-standard DataSource, so an "unknown data source" warning appears. **This is expected**: IDs are visible but not resolved to links.
+- Inspect expansion, provenance, and MISSes with grep:
 
 ```bash
-grep -c 'Source="PathLift"' out.gpml      # PathLift が触れたノード数
-grep -o 'routes=[^<"]*' out.gpml | sort | uniq -c   # どのルートで当たったか
-grep -o 'unmapped:[^<]*' out.gpml          # MISS（記号付き）
+grep -c 'Source="PathLift"' out.gpml                  # nodes touched by PathLift
+grep -o 'routes=[^<"]*' out.gpml | sort | uniq -c     # which route matched
+grep -o 'unmapped:[^<]*' out.gpml                     # MISSes (with symbols)
 ```
 
-- **候補の選別**（偽陽性の除去）は PathLift の外。出力 GPML と拡張 TPM を **QPX notebook** で発現と突き合わせて行う。
+- **Selecting candidates** (removing false positives) happens outside PathLift: compare the output GPML with extended TPM expression data in a **QPX notebook**.
 
 ---
 
-## 7. PoC 実績（再現用の実例）
+## PoC results
 
-| recipe | source | target | matched/GeneProduct | 展開率 |
+| Recipe | Source | Target | matched / GeneProduct | Expansion ratio |
 |---|---|---|---|---|
-| WP550_ac.yaml | WP550 | | |
-| WP5609_Ac.yaml | WP5609（代謝） | A.cerana | 31/38 (82%) | 2.3 |
-| WP5277_Bmori.yaml | WP5277（ステロイド代謝） | B.mori | 7/13 (54%) | 1.7 |
-| WP5601_Bmori.yaml | WP5601（シグナル） | B.mori | 23/33 (70%) | 3.0 |
+| WP550_Ac.yaml | WP550 | *A. cerana* | — | — |
+| WP5609_Ac.yaml | WP5609 (metabolism) | *A. cerana* | 31/38 (82%) | 2.3 |
+| WP5277_Bmori.yaml | WP5277 (steroid metabolism) | *B. mori* | 7/13 (54%) | 1.7 |
+| WP5601_Bmori.yaml | WP5601 (signaling) | *B. mori* | 23/33 (70%) | 3.0 |
 
-数字の解釈は `設計資料/PoC知見と設計判断.md`（マッチ率・展開率の二要因、MISS の支配機構）。
-
----
-
-## 8. つまずきやすい点
-
-- `bquote>` / `quote>` がシェルに出て止まる → 引用符（`` ` `` `'` `"`)の閉じ忘れ。`Ctrl-C` で抜ける。
-- `recipe検証に失敗` → 正常動作。メッセージのパス／列名を直す。特に**相対パスの基準（recipe のディレクトリ）**と表ヘッダの列名一致。
-- パスが `.../src/resource` のように一段ずれる → recipe の `../resource` の階層数を配置に合わせる。
-- `-o` の出力パスは **実行時のカレントディレクトリ基準**（recipe 基準ではない）。
-- `routes.compute: true` なのに `blastp: command not found` → `blastp`をインストールしたconda envを`activate`し忘れ。envは`pathlift`実行時のシェルのPATHに`blastp`が乗ってさえいればよく、`pathlift`自体を動かしているPython環境と同じである必要はない。
-- `compute`実行時にNCBI関連のエラーが1件だけ出て止まらない → 5章「既知の注意点」のレート制限。致命的ではないので無視してよい（頻発するなら要相談）。
+For interpretation (the two factors behind match and expansion ratios, and what drives MISSes), see `設計資料/PoC知見と設計判断.md`.
 
 ---
 
-## ディレクトリ構成
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| Shell shows `bquote>` / `quote>` and hangs | Unclosed quote (`` ` `` `'` `"`). Press `Ctrl-C`. |
+| `recipe検証に失敗` (recipe validation failed) | Working as intended. Fix the path/column named in the message, especially **relative-path base (recipe directory)** and table header names. |
+| Path shifts by one level, e.g. `.../src/resource` | Adjust the number of `../` in the recipe to your layout. |
+| Output file in an unexpected place | `-o` is relative to the **current directory**, not the recipe. |
+| `blastp: command not found` with `routes.compute: true` | The conda env containing `blastp` is not activated. It only needs to be on `PATH`; it need not be the same env as `pathlift`. |
+| A single NCBI-related error during compute, but the run continues | Rate limit (see [Known caveats](#known-caveats)). Not fatal; report it if it happens often. |
+
+---
+
+## Repository layout
 
 ```
 PathLift/
-├── pathlift/   コード(パッケージ)。models / txgene / ortholog / gpml / transform / recipe / cli
-│               / query_fasta / blast_runner / auto_curation（compute ルート）
-├── configs/    recipe + curation（+ compute実行時は *_auto_curation.yaml もここに生成される）
-├── spike/      調査用スクリプト
-├── 設計資料/    設計（権威）
-├── 開発管理/    ログ・記録
-├── resource/   大容量入力(gitignore)。unmapped_queries.fa 等の中間生成物もここに出る
+├── pathlift/      Package: models / txgene / ortholog / gpml / transform / recipe / cli
+│                  / query_fasta / blast_runner / auto_curation (compute route)
+├── configs/       Recipes + curation (*_auto_curation.yaml is generated here by compute)
+├── spike/         Exploratory scripts
+├── 設計資料/       Design documents (authoritative)
+├── 開発管理/       Logs and records
+├── resource/      Large inputs (git-ignored); intermediates such as unmapped_queries.fa go here
 └── pyproject.toml
 ```
+
+## Documentation (Japanese)
+
+- Design and background: `設計資料/` (start with `設計資料/PoC知見と設計判断.md`)
+- Recipe format: `設計資料/recipe.schema.md`
+- Guidelines for AI agents: `CLAUDE.md`
+- Test run logs: `開発管理/テストログ_*.md`
