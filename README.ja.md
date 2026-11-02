@@ -1,5 +1,7 @@
 # PathLift
 
+[MIT ライセンス](LICENSE)。Copyright (c) 2026 Naoya Oec.
+
 WikiPathways の GPML パスウェイを、オルソログ対応表を参照して**別種の遺伝子IDに付け替える（lift する）** CLI ツール。
 変換元（ヒト等）の GeneProduct ノードを、target 種の候補遺伝子ノードに置換・展開した GPML を出力する。
 

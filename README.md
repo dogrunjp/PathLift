@@ -2,6 +2,8 @@
 
 **English** | [日本語](README.ja.md)
 
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 Naoya Oec.
+
 PathLift is a CLI tool that **lifts** WikiPathways GPML pathways onto another species by re-assigning gene IDs through an ortholog table.
 Each GeneProduct node of the source species (e.g., human) is replaced with, or expanded into, candidate gene nodes of the target species, and the result is written out as GPML.
 
